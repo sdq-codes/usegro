@@ -11,6 +11,12 @@ var (
 
 	// Version is the built version.
 	Version string = AppSemVer
+
+	// BuildTime is the build timestamp set using ldflags.
+	BuildTime string
+
+	// BuildUser is the user who built the binary set using ldflags.
+	BuildUser string
 )
 
 func init() {
