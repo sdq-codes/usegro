@@ -34,11 +34,12 @@ func RegisterRoute(r *fiber.App) {
 
 	api := r.Group("/api")
 	v1 := api.Group("/v1")
+	base := v1.Group("/base")
 
 	// Health API
 	routes.Health(r)
-	routes.BaseRouter(v1, db, rdb)
-	formRouter.FormsRouter(v1, db, dynamodbForms)
+	routes.BaseRouter(base, db, rdb)
+	formRouter.FormsRouter(base, db, dynamodbForms)
 
 	// Error Case Handler
 	miscellaneousHandler := httpMiscellaneous.NewMiscellaneousHTTPHandler()

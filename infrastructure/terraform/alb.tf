@@ -85,7 +85,7 @@ resource "aws_lb_listener" "http" {
 resource "aws_lb_listener_rule" "http_crm" {
   count        = var.certificate_arn == "" ? 1 : 0
   listener_arn = aws_lb_listener.http.arn
-  priority     = 20
+  priority     = 100
 
   action {
     type             = "forward"
@@ -100,7 +100,7 @@ resource "aws_lb_listener_rule" "http_crm" {
 resource "aws_lb_listener_rule" "http_base" {
   count        = var.certificate_arn == "" ? 1 : 0
   listener_arn = aws_lb_listener.http.arn
-  priority     = 10
+  priority     = 200
 
   action {
     type             = "forward"
@@ -108,7 +108,7 @@ resource "aws_lb_listener_rule" "http_base" {
   }
 
   condition {
-    path_pattern { values = ["/api*"] }
+    path_pattern { values = ["/api/v1/base*"] }
   }
 }
 
@@ -135,7 +135,7 @@ resource "aws_lb_listener" "https" {
 resource "aws_lb_listener_rule" "https_crm" {
   count        = var.certificate_arn != "" ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
-  priority     = 20
+  priority     = 100
 
   action {
     type             = "forward"
@@ -150,7 +150,7 @@ resource "aws_lb_listener_rule" "https_crm" {
 resource "aws_lb_listener_rule" "https_base" {
   count        = var.certificate_arn != "" ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
-  priority     = 10
+  priority     = 200
 
   action {
     type             = "forward"
@@ -158,6 +158,6 @@ resource "aws_lb_listener_rule" "https_base" {
   }
 
   condition {
-    path_pattern { values = ["/api*"] }
+    path_pattern { values = ["/api/v1/base*"] }
   }
 }
