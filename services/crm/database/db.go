@@ -33,7 +33,7 @@ func SetUpPostgres() {
 
 	// Connect using GORM
 	db, err := gorm.Open(postgres.Open(fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
+		"host=%s user=%s password=%s dbname=%s port=%d sslmode=require TimeZone=UTC",
 		cfg.Host,     // host
 		cfg.Username, // user
 		cfg.Password, // password
@@ -68,4 +68,3 @@ func SetUpPostgres() {
 
 	PostgressInstance1 = db
 }
-
