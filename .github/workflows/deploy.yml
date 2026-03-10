@@ -1,0 +1,109 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Service to deploy"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - base
+          - crm
+
+env:
+  AWS_REGION: eu-west-1
+  AWS_ACCOUNT_ID: 979848238027
+  ECS_CLUSTER: usegro-production-cluster
+  PROJECT: usegro
+
+jobs:
+  deploy-base:
+    name: Deploy base
+    runs-on: ubuntu-latest
+    if: ${{ inputs.service == 'base' || inputs.service == '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push base image
+        env:
+          IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT }}/base:production
+        run: |
+          docker build \
+            -f services/base/Dockerfile \
+            -t $IMAGE \
+            .
+          docker push $IMAGE
+
+      - name: Force ECS redeploy (base)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service usegro-production-base \
+            --force-new-deployment \
+            --query 'service.serviceName' \
+            --output text
+
+      - name: Wait for base to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services usegro-production-base
+
+  deploy-crm:
+    name: Deploy crm
+    runs-on: ubuntu-latest
+    if: ${{ inputs.service == 'crm' || inputs.service == '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push crm image
+        env:
+          IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT }}/crm:production
+        run: |
+          docker build \
+            -f services/crm/Dockerfile.prod \
+            -t $IMAGE \
+            .
+          docker push $IMAGE
+
+      - name: Force ECS redeploy (crm)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service usegro-production-crm \
+            --force-new-deployment \
+            --query 'service.serviceName' \
+            --output text
+
+      - name: Wait for crm to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services usegro-production-crm
