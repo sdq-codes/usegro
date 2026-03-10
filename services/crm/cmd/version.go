@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	
+	"github.com/usegro/services/crm/version"
 )
 
 func init() {
