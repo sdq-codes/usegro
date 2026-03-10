@@ -9,11 +9,11 @@ WORKDIR /app
 COPY proto/ /proto/
 
 # Copy go.mod and go.sum to cache dependencies
-COPY services/base/go.mod services/base/go.sum ./
+COPY services/crm/go.mod services/crm/go.sum ./
 RUN go mod download
 
 # Copy the rest of the application code
-COPY services/base/ .
+COPY services/crm/ .
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o server .
@@ -29,10 +29,10 @@ COPY --from=builder /app/server .
 COPY --from=builder /app/config ./config
 COPY --from=builder /app/internal/resources ./internal/resources
 
-COPY services/base/entrypoint.sh .
+COPY services/crm/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
-EXPOSE 8090
+EXPOSE 8080
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["./server", "serve-api"]
