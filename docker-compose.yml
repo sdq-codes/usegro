@@ -192,6 +192,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: usegro_frontend
+    environment:
+      NUXT_PUBLIC_API_BASE: "http://localhost/api/v1"
     expose:
       - "3000"
     networks:
