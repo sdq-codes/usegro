@@ -1,0 +1,25 @@
+http:
+  middlewares:
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "Origin"
+          - "Content-Type"
+          - "Accept"
+          - "Authorization"
+          - "X-CRM-ID"
+        accessControlExposeHeaders:
+          - "Authorization"
+          - "X-Request-Id"
+          - "X-CRM-ID"
+        accessControlAllowOriginList:
+          - "*"  # tighten to your frontend domain in production
+        accessControlMaxAge: 100
+        addVaryHeader: true

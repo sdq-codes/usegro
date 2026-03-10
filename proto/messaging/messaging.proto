@@ -1,0 +1,203 @@
+syntax = "proto3";
+package messaging;
+option go_package = "github.com/usegro/proto/messaging";
+
+import "google/protobuf/timestamp.proto";
+import "proto/whatsapp/whatsapp.proto";
+
+service MessagingService {
+  // Conversations / Inbox
+  rpc GetConversation(GetConversationRequest) returns (Conversation);
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
+  rpc AssignConversation(AssignConversationRequest) returns (Conversation);
+  rpc LabelConversation(LabelConversationRequest) returns (Conversation);
+  rpc ResolveConversation(ResolveConversationRequest) returns (Conversation);
+
+  // Messages
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+
+  // Templates
+  rpc CreateTemplate(CreateTemplateRequest) returns (Template);
+  rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
+  rpc SyncTemplatesFromMeta(SyncTemplatesRequest) returns (SyncTemplatesResponse);
+
+  // Campaigns / Broadcast
+  rpc CreateCampaign(CreateCampaignRequest) returns (Campaign);
+  rpc LaunchCampaign(LaunchCampaignRequest) returns (Campaign);
+  rpc GetCampaignStats(GetCampaignStatsRequest) returns (CampaignStats);
+}
+
+// ─── Conversation ───────────────────────────────────────────
+
+message Conversation {
+  string id             = 1;
+  string tenant_id      = 2;
+  string contact_id     = 3;
+  string contact_phone  = 4;
+  string contact_name   = 5;
+  ConversationStatus status = 6;
+  string assigned_to    = 7;  // agent user_id
+  repeated string labels = 8;
+  int32 unread_count    = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp last_message_at = 11;
+  Message last_message  = 12;
+}
+
+enum ConversationStatus {
+  CONV_OPEN     = 0;
+  CONV_RESOLVED = 1;
+  CONV_PENDING  = 2;
+  CONV_SNOOZED  = 3;
+}
+
+message GetConversationRequest   { string id = 1; }
+message AssignConversationRequest { string conversation_id = 1; string agent_id = 2; }
+message LabelConversationRequest  { string conversation_id = 1; repeated string labels = 2; }
+message ResolveConversationRequest { string conversation_id = 1; }
+
+message ListConversationsRequest {
+  string tenant_id     = 1;
+  ConversationStatus status = 2;
+  string assigned_to   = 3;
+  repeated string labels = 4;
+  int32 page           = 5;
+  int32 page_size      = 6;
+}
+
+message ListConversationsResponse {
+  repeated Conversation conversations = 1;
+  int32 total = 2;
+}
+
+// ─── Message ────────────────────────────────────────────────
+
+message Message {
+  string id              = 1;
+  string conversation_id = 2;
+  string tenant_id       = 3;
+  MessageDirection direction = 4;
+  whatsapp.MessageType type  = 5;
+  whatsapp.MessageContent content = 6;
+  whatsapp.MessageStatus status = 7;
+  string wa_message_id   = 8;  // Meta's message ID
+  google.protobuf.Timestamp created_at = 9;
+}
+
+enum MessageDirection {
+  DIRECTION_INBOUND  = 0;
+  DIRECTION_OUTBOUND = 1;
+}
+
+message SendMessageRequest {
+  string conversation_id = 1;
+  string tenant_id       = 2;
+  string agent_id        = 3;
+  whatsapp.OutboundContent content = 4;
+}
+
+message SendMessageResponse {
+  string message_id    = 1;
+  string wa_message_id = 2;
+}
+
+message ListMessagesRequest {
+  string conversation_id = 1;
+  int32  page            = 2;
+  int32  page_size       = 3;
+}
+
+message ListMessagesResponse {
+  repeated Message messages = 1;
+  int32 total = 2;
+}
+
+// ─── Template ───────────────────────────────────────────────
+
+message Template {
+  string id          = 1;
+  string tenant_id   = 2;
+  string name        = 3;
+  string language    = 4;
+  string category    = 5;
+  TemplateStatus status = 6;
+  repeated TemplateComponent components = 7;
+  string meta_template_id = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+enum TemplateStatus {
+  TEMPLATE_PENDING  = 0;
+  TEMPLATE_APPROVED = 1;
+  TEMPLATE_REJECTED = 2;
+}
+
+message TemplateComponent {
+  string type = 1;   // HEADER, BODY, FOOTER, BUTTONS
+  string text = 2;
+  repeated TemplateButton buttons = 3;
+}
+
+message TemplateButton {
+  string type = 1;   // QUICK_REPLY, URL, PHONE_NUMBER
+  string text = 2;
+  string value = 3;
+}
+
+message CreateTemplateRequest {
+  string tenant_id  = 1;
+  string name       = 2;
+  string language   = 3;
+  string category   = 4;
+  repeated TemplateComponent components = 5;
+}
+
+message ListTemplatesRequest    { string tenant_id = 1; TemplateStatus status = 2; }
+message ListTemplatesResponse   { repeated Template templates = 1; }
+message SyncTemplatesRequest    { string tenant_id = 1; }
+message SyncTemplatesResponse   { int32 synced = 1; }
+
+// ─── Campaign ───────────────────────────────────────────────
+
+message Campaign {
+  string id          = 1;
+  string tenant_id   = 2;
+  string name        = 3;
+  string template_id = 4;
+  CampaignStatus status = 5;
+  repeated string contact_ids = 6;  // or segment
+  string segment_filter = 7;        // JSON filter for dynamic segments
+  google.protobuf.Timestamp scheduled_at = 8;
+  google.protobuf.Timestamp sent_at      = 9;
+  google.protobuf.Timestamp created_at   = 10;
+}
+
+enum CampaignStatus {
+  CAMPAIGN_DRAFT     = 0;
+  CAMPAIGN_SCHEDULED = 1;
+  CAMPAIGN_RUNNING   = 2;
+  CAMPAIGN_COMPLETED = 3;
+  CAMPAIGN_FAILED    = 4;
+}
+
+message CampaignStats {
+  string campaign_id = 1;
+  int32 total        = 2;
+  int32 sent         = 3;
+  int32 delivered    = 4;
+  int32 read         = 5;
+  int32 replied      = 6;
+  int32 failed       = 7;
+}
+
+message CreateCampaignRequest {
+  string tenant_id   = 1;
+  string name        = 2;
+  string template_id = 3;
+  repeated string contact_ids = 4;
+  google.protobuf.Timestamp scheduled_at = 5;
+}
+
+message LaunchCampaignRequest      { string campaign_id = 1; }
+message GetCampaignStatsRequest    { string campaign_id = 1; }

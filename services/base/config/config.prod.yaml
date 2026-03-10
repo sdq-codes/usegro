@@ -1,0 +1,76 @@
+env: "production"
+
+app:
+  name: "Usegro"
+  nameSlug: "use-gro"
+
+httpServer:
+  port: 8090
+
+log:
+  level: "info"
+  stacktraceLevel: "error"
+  fileEnabled: false
+  fileSize: 10
+  filePath: "log/log.log"
+  fileCompress: false
+  maxAge: 7
+  maxBackups: 5
+
+postgres:
+  host: "${POSTGRES_HOST}"
+  port: 5432
+  database: "${POSTGRES_DB}"
+  schema: "public"
+  username: "${POSTGRES_USER}"
+  password: "" # injected via POSTGRES_PASSWORD env var (Secrets Manager)
+  maxConnections: 10
+  maxConnIdleTime: 5
+
+dynamodbForms:
+  awsRegion: "${AWS_REGION}"
+  dynamoEndpoint: "" # empty = use AWS managed DynamoDB
+  dynamoTable: "crm_forms"
+  dynamoFormTableName: "forms"
+
+redis:
+  - host: "${REDIS_HOST}"
+    port: 6379
+    password: ""
+    db: 0
+
+auth:
+  apiSecret: ""  # injected via AUTH_API_SECRET env var (Secrets Manager)
+  tokenExpiryMinutes: 30
+  refreshTokenExpiryDays: 7
+
+ses:
+  region: "${AWS_REGION}"
+  fromEmail: "" # injected via SES_FROM_EMAIL env var
+
+frontEnd:
+  url: "${FRONTEND_URL}"
+
+google:
+  clientId: ""      # injected via GOOGLE_CLIENT_ID env var
+  clientSecret: ""  # injected via GOOGLE_CLIENT_SECRET env var
+  redirectUrl: "${ALB_URL}/api/v1/authentication/google/callback"
+
+facebook:
+  appId: ""      # injected via FACEBOOK_APP_ID env var
+  appSecret: ""  # injected via FACEBOOK_APP_SECRET env var
+  redirectUrl: "${ALB_URL}/api/v1/oauth/callback"
+  oauthUrl: "https://www.facebook.com/v18.0/dialog/oauth"
+  tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token"
+
+sentry:
+  dsn: ""  # injected via SENTRY_DSN env var
+  environment: "production"
+  release: "usegro@v1.0.0"
+  debug: false
+
+crmService:
+  address: "crm.usegro.internal:50051"
+
+scheduler:
+  timezone: "Africa/Nigeria"

@@ -1,0 +1,210 @@
+networks:
+  usegro_network:
+    driver: bridge
+    name: usegro_network
+
+services:
+  # ─── Infrastructure ────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: usegro_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-usegro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-usegro_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-usegro}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U usegro"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - usegro_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: usegro_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - usegro_network
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: usegro_dynamodb
+    user: root
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    networks:
+      - usegro_network
+
+  # ─── API Gateway (Traefik) ─────────────────────────────────
+  traefik:
+    image: traefik:v3.1
+    container_name: usegro_traefik
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"            # public entry point
+      - "${TRAEFIK_DASHBOARD_PORT:-8081}:8080"   # dashboard — restrict/disable in production
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./infrastructure/traefik/traefik.yml:/traefik.yml:ro
+      - ./infrastructure/traefik/dynamic.yml:/dynamic.yml:ro
+    networks:
+      - usegro_network
+    depends_on:
+      - base
+      - crm
+      - whatsapp-gateway
+      - frontend
+
+  # ─── Base Service (auth, user, verification, forms) ────────
+  base:
+    build:
+      context: .
+      dockerfile: services/base/Dockerfile
+    container_name: usegro_base
+    env_file: .env
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - usegro_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.base.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.base.priority=10"
+      - "traefik.http.routers.base.entrypoints=web"
+      - "traefik.http.routers.base.middlewares=cors@file"
+      - "traefik.http.services.base.loadbalancer.server.port=8090"
+
+  # ─── CRM Service (/api/v1/crm/*) ───────────────────────────
+  crm:
+    build:
+      context: .
+      dockerfile: services/crm/Dockerfile
+    container_name: usegro_crm
+    env_file: .env
+    expose:
+      - "8080"   # HTTP (Fiber) — routed via Traefik
+      - "50051"  # gRPC — called internally by messaging/billing/analytics
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - usegro_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.crm.rule=PathPrefix(`/api/v1/crm`)"
+      - "traefik.http.routers.crm.priority=30"
+      - "traefik.http.routers.crm.entrypoints=web"
+      - "traefik.http.routers.crm.middlewares=cors@file"
+      - "traefik.http.services.crm.loadbalancer.server.port=8090"
+
+  # ─── Internal gRPC Services ─────────────────────────────────
+  # Not exposed via Traefik — called by CRM over the internal Docker network
+  messaging:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/messaging.Dockerfile
+    container_name: usegro_messaging
+    expose:
+      - "50052"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      dynamodb-local:
+        condition: service_started
+    networks:
+      - usegro_network
+
+  billing:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/billing.Dockerfile
+    container_name: usegro_billing
+    expose:
+      - "50053"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - usegro_network
+
+  analytics:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/analytics.Dockerfile
+    container_name: usegro_analytics
+    expose:
+      - "50054"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dynamodb-local:
+        condition: service_started
+    networks:
+      - usegro_network
+
+  # ─── WhatsApp Webhook Gateway ───────────────────────────────
+  whatsapp-gateway:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/whatsapp-gateway.Dockerfile
+    container_name: usegro_whatsapp_gateway
+    env_file: .env
+    expose:
+      - "3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - usegro_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wa.rule=PathPrefix(`/wa`)"
+      - "traefik.http.routers.wa.priority=20"
+      - "traefik.http.routers.wa.entrypoints=web"
+      - "traefik.http.routers.wa.middlewares=cors@file"
+      - "traefik.http.services.wa.loadbalancer.server.port=3000"
+
+  # ─── Frontend ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: usegro_frontend
+    expose:
+      - "3000"
+    networks:
+      - usegro_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.middlewares=cors@file"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  dynamodb_data:

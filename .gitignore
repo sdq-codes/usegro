@@ -1,0 +1,106 @@
+# ========================
+# Environment & Secrets
+# ========================
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ========================
+# macOS
+# ========================
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# ========================
+# IDE
+# ========================
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# ========================
+# Go
+# ========================
+# Binaries
+services/**/bin/
+services/**/build/
+services/**/server
+services/**/main
+
+# Build temp (air)
+services/**/tmp/
+tmp/
+
+# Test output
+*.test
+*.out
+coverage.txt
+
+# ========================
+# Node.js / Frontend
+# ========================
+node_modules/
+frontend/node_modules/
+frontend/.yarn/cache
+frontend/.yarn/unplugged
+frontend/.yarn/build-state.yml
+frontend/.yarn/install-state.gz
+
+# Nuxt
+frontend/.nuxt/
+frontend/.output/
+
+# Build output
+dist/
+frontend/dist/
+
+# Cache
+frontend/.eslintcache
+frontend/.stylelintcache
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ========================
+# Terraform
+# ========================
+infrastructure/**/.terraform/
+infrastructure/**/.terraform.lock.hcl
+infrastructure/**/terraform.tfstate
+infrastructure/**/terraform.tfstate.backup
+infrastructure/**/terraform.tfvars
+!infrastructure/**/terraform.tfvars.example
+infrastructure/**/*.tfplan
+infrastructure/**/override.tf
+infrastructure/**/override.tf.json
+
+# ========================
+# Docker
+# ========================
+# Don't ignore Dockerfiles, but ignore local override files
+docker-compose.override.yml
+
+# ========================
+# Certificates & Keys
+# ========================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# ========================
+# Misc
+# ========================
+*.swp
+*.swo
+*~

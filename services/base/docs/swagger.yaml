@@ -1,0 +1,1737 @@
+definitions:
+  dto.AuthTokensDTO:
+    properties:
+      access_token:
+        type: string
+      email:
+        type: string
+      id: {}
+      refresh_token:
+        type: string
+    type: object
+  dto.CrmUserOrganizationDTI:
+    properties:
+      business_info:
+        allOf:
+        - $ref: '#/definitions/models.BusinessInfoType'
+        enum:
+        - starter_package
+        - existing_package
+      business_name:
+        minLength: 2
+        type: string
+      full_name:
+        maxLength: 255
+        minLength: 2
+        type: string
+    required:
+    - business_info
+    - business_name
+    - full_name
+    type: object
+  dto.CrmUserOrganizationStockProductTypeDTI:
+    properties:
+      product_type:
+        items:
+          $ref: '#/definitions/models.ProductType'
+        type: array
+    required:
+    - product_type
+    type: object
+  dto.EmailVerificationDTI:
+    properties:
+      token_hash:
+        maxLength: 6
+        minLength: 6
+        type: string
+    required:
+    - token_hash
+    type: object
+  dto.ForgotPasswordDTI:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  dto.RefreshTokenDTI:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RegisterUserDTI:
+    properties:
+      email:
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RequestEmailCodeDTI:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  dto.ResetPasswordDTI:
+    properties:
+      confirm_password:
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - confirm_password
+    - password
+    - token
+    type: object
+  dto.TagCreateDTO:
+    properties:
+      tag:
+        maxLength: 50
+        minLength: 2
+        type: string
+    required:
+    - tag
+    type: object
+  dto.TagUpdateDTO:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  dto.UserExistDTI:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  dto.VerifyEmailCodeDTI:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    required:
+    - code
+    - email
+    type: object
+  dtos.CreateSubmissionInput:
+    properties:
+      answers:
+        additionalProperties: true
+        type: object
+      type:
+        type: string
+      versionSnap: {}
+    required:
+    - answers
+    - type
+    - versionSnap
+    type: object
+  dtos.CreateVersionFieldInputDTI:
+    properties:
+      configs:
+        items:
+          additionalProperties:
+            type: string
+          type: object
+        type: array
+      description:
+        type: string
+      fieldTypeID:
+        type: integer
+      fieldTypeName:
+        type: string
+      hint:
+        type: string
+      label:
+        type: string
+      logic:
+        items:
+          $ref: '#/definitions/dtos.FieldLogicDTO'
+        type: array
+      options:
+        items:
+          $ref: '#/definitions/models.Option'
+        type: array
+      order:
+        type: integer
+      placeholder:
+        type: string
+      required:
+        type: boolean
+      section:
+        type: string
+      slug:
+        type: string
+      validations:
+        items:
+          additionalProperties:
+            type: string
+          type: object
+        type: array
+    type: object
+  dtos.CreateVersionRequestDTI:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  dtos.FieldLogicDTO:
+    properties:
+      action:
+        description: e.g. show, hide, enable, disable
+        type: string
+      formVersionFieldID:
+        description: the field it depends on
+        type: string
+      operator:
+        description: e.g. equals, not_equals, greater_than
+        type: string
+      value:
+        description: the value to compare
+    required:
+    - action
+    - formVersionFieldID
+    - operator
+    - value
+    type: object
+  exception.ExceptionError:
+    properties:
+      error_subcode:
+        type: integer
+      message:
+        type: string
+      type:
+        $ref: '#/definitions/exception.errorType'
+    type: object
+  exception.ExceptionErrors:
+    properties:
+      errItems:
+        items:
+          $ref: '#/definitions/exception.ExceptionError'
+        type: array
+      globalMessage:
+        type: string
+      httpStatusCode:
+        type: integer
+    type: object
+  exception.errorType:
+    enum:
+    - UnknownError
+    - BadRequest
+    - InvalidUUID
+    - NotFound
+    - Unauthorized
+    - ValidationError
+    - JobError
+    - ExternalServiceError
+    - DatasourceError
+    type: string
+    x-enum-varnames:
+    - ERROR_TYPE_UNKNOWN_ERROR
+    - ERROR_TYPE_BAD_REQUEST
+    - ERROR_TYPE_INVALID_UUID
+    - ERROR_TYPE_NOT_FOUND
+    - ERROR_TYPE_UNAUTHORIZED
+    - ERROR_TYPE_VALIDATION_ERROR
+    - ERROR_TYPE_JOB_ERROR
+    - ERROR_TYPE_EXTERNAL_SERVICE_ERROR
+    - ERROR_TYPE_DATASOURCE_ERROR
+  models.BusinessInfoType:
+    enum:
+    - starter_package
+    - existing_package
+    type: string
+    x-enum-varnames:
+    - StarterPackage
+    - ExistingPackage
+  models.Option:
+    properties:
+      label:
+        type: string
+      value:
+        type: string
+    type: object
+  models.ProductType:
+    enum:
+    - physical_products
+    - digital_products
+    - services_products
+    - unknown_products
+    type: string
+    x-enum-varnames:
+    - PhysicalProducts
+    - DigitalProducts
+    - ServicesProducts
+    - UnknownProducts
+  response.CommonResponse:
+    properties:
+      data: {}
+      errors:
+        $ref: '#/definitions/exception.ExceptionErrors'
+      request_id:
+        type: string
+      response_code:
+        type: integer
+      response_message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/authentication/email-code/request:
+    post:
+      consumes:
+      - application/json
+      description: Sends a 6-character one-time code to the given email. Always returns
+        200 to avoid leaking whether an email is registered. Code expires in 10 minutes.
+      parameters:
+      - description: Email address
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestEmailCodeDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Request a login code
+      tags:
+      - Authentication
+  /api/v1/authentication/email-code/verify:
+    post:
+      consumes:
+      - application/json
+      description: Validates the one-time code sent to the user's email and returns
+        an access + refresh token pair.
+      parameters:
+      - description: Email and code
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyEmailCodeDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthTokensDTO'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Login with email code
+      tags:
+      - Authentication
+  /api/v1/authentication/email/exist:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserExistDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Check if email exists
+      tags:
+      - Authentication
+  /api/v1/authentication/forgot-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Request password reset
+      tags:
+      - Authentication
+  /api/v1/authentication/google/callback:
+    get:
+      description: Validates the CSRF state, exchanges the authorization code for
+        tokens, then redirects to the frontend with access_token and refresh_token
+        as query params. On error, redirects with an error param.
+      parameters:
+      - description: Authorization code returned by Google
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: CSRF state token (must match the one issued by /login)
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Redirect to frontend /oauth/callback?error=...
+      summary: Google OAuth callback
+      tags:
+      - Authentication
+  /api/v1/authentication/google/login:
+    get:
+      description: Generates a CSRF state token, stores it in Redis, and redirects
+        the user to Google's OAuth consent screen
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Redirect to Google OAuth consent screen
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Initiate Google OAuth login
+      tags:
+      - Authentication
+  /api/v1/authentication/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterUserDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Log in a user
+      tags:
+      - Authentication
+  /api/v1/authentication/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revokes the refresh token so it cannot be used again.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Logout
+      tags:
+      - Authentication
+  /api/v1/authentication/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a valid refresh token for a new access + refresh token
+        pair. The old refresh token is invalidated.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Refresh access token
+      tags:
+      - Authentication
+  /api/v1/authentication/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterUserDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Register a new user
+      tags:
+      - Authentication
+  /api/v1/authentication/reset-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Reset data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Reset user password
+      tags:
+      - Authentication
+  /api/v1/crm:
+    get:
+      description: Retrieves all CRM user organizations belonging to the authenticated
+        user
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: List all CRM organizations for the authenticated user
+      tags:
+      - CRM
+    post:
+      consumes:
+      - application/json
+      description: Creates a new CRM user organization record
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM User Organization Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CrmUserOrganizationDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Create a CRM user organization
+      tags:
+      - CRM
+  /api/v1/crm/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a CRM user organization by ID
+      parameters:
+      - description: CRM User Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Get a CRM user organization
+      tags:
+      - CRM
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing CRM user organization record by ID
+      parameters:
+      - description: CRM User Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CRM User Organization Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CrmUserOrganizationDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Update a CRM user organization
+      tags:
+      - CRM
+  /api/v1/crm/{id}/sales-channels:
+    patch:
+      consumes:
+      - application/json
+      description: Updates sales channel types for a CRM user organization
+      parameters:
+      - description: CRM User Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Sales Channel Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Update Sales Channel Types
+      tags:
+      - CRM
+    post:
+      consumes:
+      - application/json
+      description: Creates new sales channel types for a CRM user organization
+      parameters:
+      - description: CRM User Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Sales Channel Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Create Sales Channel Types
+      tags:
+      - CRM
+  /api/v1/crm/{id}/stock-products:
+    patch:
+      consumes:
+      - application/json
+      description: Updates stock product types for a CRM user organization
+      parameters:
+      - description: CRM User Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stock Product Type Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CrmUserOrganizationStockProductTypeDTI'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Update Stock Product Types
+      tags:
+      - CRM
+    post:
+      consumes:
+      - application/json
+      description: Creates new stock product types for a CRM user organization
+      parameters:
+      - description: CRM User Organization ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Stock Product Type Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CrmUserOrganizationStockProductTypeDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Create Stock Product Types
+      tags:
+      - CRM
+  /api/v1/crm/customers:
+    get:
+      description: Returns all customers belonging to the CRM. CRM ID is supplied
+        via the X-CRM-ID header.
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: List all CRM customers
+      tags:
+      - Customers
+  /api/v1/crm/customers/{formId}/{submissionId}:
+    delete:
+      description: Archives a customer submission. CRM ID is supplied via the X-CRM-ID
+        header.
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Submission ID
+        in: path
+        name: submissionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Archive a CRM customer
+      tags:
+      - Customers
+    get:
+      description: Fetches a single customer by form and submission ID. CRM ID is
+        supplied via the X-CRM-ID header.
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Submission ID
+        in: path
+        name: submissionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Get a CRM customer
+      tags:
+      - Customers
+  /api/v1/crm/forms/customers/create:
+    get:
+      description: Fetches the published "create_customer" form for the CRM. CRM ID
+        is supplied via the X-CRM-ID header.
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Get the published create-customer form
+      tags:
+      - Customers
+  /api/v1/crm/socials/instagram:
+    get:
+      description: Redirects the user to the Facebook OAuth consent screen to connect
+        their Instagram Business account
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Redirect to Facebook OAuth
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Initiate Instagram / Facebook OAuth login
+      tags:
+      - CRM Socials
+  /api/v1/crm/status:
+    patch:
+      consumes:
+      - application/json
+      description: Enables or disables the authenticated user's CRM organization
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Toggle CRM user organization status
+      tags:
+      - CRM
+  /api/v1/crm/tags:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all tags for a CRM. CRM ID is supplied via the X-CRM-ID
+        header.
+      parameters:
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: List CRM tags
+      tags:
+      - Tags
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tag for a CRM. CRM ID is supplied via the X-CRM-ID
+        header.
+      parameters:
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Tag Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TagCreateDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Create a tag
+      tags:
+      - Tags
+  /api/v1/crm/tags/{tagId}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a tag by ID. CRM ID is supplied via the X-CRM-ID header.
+      parameters:
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Tag ID
+        in: path
+        name: tagId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Get a tag
+      tags:
+      - Tags
+  /api/v1/crm/tags/{tagId}/name:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the name of a tag. CRM ID is supplied via the X-CRM-ID
+        header.
+      parameters:
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Tag ID
+        in: path
+        name: tagId
+        required: true
+        type: string
+      - description: Tag Update Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TagUpdateDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Update tag name
+      tags:
+      - Tags
+  /api/v1/crm/tags/{tagId}/status:
+    patch:
+      description: Toggles the active/inactive status of a tag. No request body required.
+        CRM ID is supplied via the X-CRM-ID header.
+      parameters:
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Tag ID
+        in: path
+        name: tagId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Toggle tag status
+      tags:
+      - Tags
+  /api/v1/forms:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new form with an initial draft version. CRM ID is supplied
+        via the X-CRM-ID header.
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Form payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateVersionRequestDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Create a new form
+      tags:
+      - Forms
+  /api/v1/forms/{formId}:
+    get:
+      description: Returns a form with its latest published version and all fields/logic
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Fetch latest published form
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/draft:
+    get:
+      description: Returns a form with its latest draft version
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Fetch latest draft form
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/fields:
+    post:
+      consumes:
+      - application/json
+      description: Appends one or more fields to an existing draft form version
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Field payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateVersionFieldInputDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Add fields to a form
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/fields/{fieldId}:
+    delete:
+      description: Permanently removes a field from the given draft form version
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Field ID
+        in: path
+        name: fieldId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Delete a field from a form
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/publish:
+    post:
+      description: Publishes the latest draft version of a form, making it publicly
+        accessible
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Publish a form version
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/version:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new draft version for an existing form
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Version payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateVersionRequestDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Create a new form version
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/version/{versionId}:
+    get:
+      description: Returns a specific version of a form with its fields and logic
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Version ID
+        in: path
+        name: versionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Fetch a specific form version
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/version/{versionId}/field/{fieldId}:
+    patch:
+      consumes:
+      - application/json
+      description: Partially updates one or more properties of a specific field within
+        a form version
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Version ID
+        in: path
+        name: versionId
+        required: true
+        type: string
+      - description: Field ID
+        in: path
+        name: fieldId
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Update a field in a form version
+      tags:
+      - Forms
+  /api/v1/forms/{formId}/version/{versionId}/submission:
+    post:
+      consumes:
+      - application/json
+      description: Creates a submission for a published form version. CRM ID is supplied
+        via the X-CRM-ID header.
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CRM ID
+        in: header
+        name: X-CRM-ID
+        required: true
+        type: string
+      - description: Form ID
+        in: path
+        name: formId
+        required: true
+        type: string
+      - description: Form Version ID
+        in: path
+        name: versionId
+        required: true
+        type: string
+      - description: Submission answers
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateSubmissionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Submit form answers
+      tags:
+      - Forms
+  /api/v1/forms/field/types:
+    get:
+      description: Returns all field types with their configs and validation rules
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: List all field types
+      tags:
+      - Forms
+  /api/v1/forms/field/types/{name}:
+    get:
+      description: Returns a single field type along with its configs and validation
+        rules
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Field type name (URL-encoded)
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Get a field type by name
+      tags:
+      - Forms
+  /api/v1/user:
+    get:
+      description: Returns the profile of the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Get logged-in user
+      tags:
+      - User
+  /api/v1/verification/email:
+    post:
+      consumes:
+      - application/json
+      description: Verifies a user's email address using the 6-digit code sent to
+        their inbox
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Verification code
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EmailVerificationDTI'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Verify email address
+      tags:
+      - Verification
+  /api/v1/verification/email/resend:
+    get:
+      description: Sends a new verification code to the authenticated user's email
+        address
+      parameters:
+      - description: Bearer access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Resend verification email
+      tags:
+      - Verification
+  /health:
+    get:
+      description: Returns 200 OK when the service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CommonResponse'
+      summary: Health check
+      tags:
+      - Health
+swagger: "2.0"

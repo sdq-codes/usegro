@@ -1,0 +1,80 @@
+env: "dev" # dev, staging, production
+app:
+  key: "my-apps-key"
+  name: "My App"
+  nameSlug: "use-gro"
+
+httpServer:
+  port: 8090
+
+log:
+  level: "debug"
+  stacktraceLevel: "error" # debug, info, warn, error, dpanic, panic, fatal
+  fileEnabled: false
+  fileSize: 10 # MB
+  filePath: "log/log.log"
+  fileCompress: false # enable log file compress before rotate
+  maxAge: 1 # days to keep log files
+  maxBackups: 10 # number of log files
+
+postgres:
+#  host: "localhost" # use "host.docker.internal" if you run apps inside docker container
+  host: "postgres" # use "host.docker.internal" if you run apps inside docker container
+  port: 5432
+  database: "usegro"
+  schema: "public"
+  username: "usegro"
+  password: "" # set via POSTGRES_PASSWORD env var
+
+dynamodbForms:
+  awsRegion: "eu-west-1"
+#  dynamoEndpoint: "http://localhost:8000"
+  dynamoEndpoint: "http://usegro_dynamodb:8000"
+  dynamoTable: "crm_forms"
+  dynamoFormTableName: "forms"
+
+redis:
+  - host: "redis"
+#  - host: "localhost"
+    port: 6379
+    password: ""
+    db: 0
+
+auth:
+  apiSecret: "" # set via AUTH_API_SECRET env var
+  tokenExpiryMinutes: 30
+  refreshTokenExpiryDays: 7
+
+ses:
+  region: "eu-west-1"
+  fromEmail: "" # set via SES_FROM_EMAIL env var
+
+frontEnd:
+  url: "http://localhost:3000"
+
+google:
+  clientId: ""     # set via GOOGLE_CLIENT_ID env var
+  clientSecret: "" # set via GOOGLE_CLIENT_SECRET env var
+  redirectUrl: "http://localhost:8090/api/v1/authentication/google/callback"
+
+facebook:
+  appId: ""        # set via FACEBOOK_APP_ID env var
+  appSecret: ""    # set via FACEBOOK_APP_SECRET env var
+  redirectUrl: "http://localhost:8080/api/v1/oauth/callback"
+  oauthUrl: "https://www.facebook.com/v18.0/dialog/oauth"
+  tokenUrl: "https://graph.facebook.com/v18.0/oauth/access_token"
+
+sentry:
+  dsn: ""          # set via SENTRY_DSN env var
+  environment: "DEV"
+  release: "go-boilerplate@v0.1.0"
+  debug: false
+
+crmService:
+  address: "localhost:50051"
+
+scheduler:
+  timezone: "Africa/Nigeria"
+# schedules:
+#   - cron: "0 */20 * * * *"
+#     job: "SyncAll"

@@ -1,0 +1,45 @@
+aws_region   = "eu-west-1"
+project_name = "usegro"
+environment  = "production"
+
+# Network
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["eu-west-1a", "eu-west-1b"]
+
+# RDS
+db_name           = "usegro"
+db_username       = "usegro"
+db_password       = "CHANGE_ME"
+db_instance_class = "db.t3.micro"
+
+# Redis
+redis_node_type = "cache.t3.micro"
+
+# Secrets
+auth_api_secret      = "CHANGE_ME"
+google_client_id     = ""
+google_client_secret = ""
+facebook_app_id      = ""
+facebook_app_secret  = ""
+sentry_dsn           = ""
+ses_from_email       = "noreply@yourdomain.com"
+stripe_secret_key    = ""
+
+# WhatsApp / Meta
+whatsapp_access_token        = ""
+whatsapp_verify_token        = ""
+whatsapp_app_secret          = ""
+whatsapp_phone_number_id     = ""
+whatsapp_business_account_id = ""
+
+# HTTPS (optional — leave empty for HTTP-only)
+domain_name     = ""   # e.g. "api.usegro.com"
+certificate_arn = ""   # e.g. "arn:aws:acm:eu-west-1:123456789:certificate/..."
+
+# ECS desired counts
+base_desired_count             = 1
+crm_desired_count              = 1
+messaging_desired_count        = 1
+billing_desired_count          = 1
+analytics_desired_count        = 1
+whatsapp_gateway_desired_count = 1

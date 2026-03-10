@@ -1,0 +1,203 @@
+syntax = "proto3";
+package crm;
+option go_package = "github.com/usegro/proto/crm";
+
+import "google/protobuf/timestamp.proto";
+
+service CRMService {
+  // Tenants
+  rpc CreateTenant(CreateTenantRequest) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+  rpc UpdateTenant(UpdateTenantRequest) returns (Tenant);
+
+  // Contacts
+  rpc CreateContact(CreateContactRequest) returns (Contact);
+  rpc GetContact(GetContactRequest) returns (Contact);
+  rpc UpdateContact(UpdateContactRequest) returns (Contact);
+  rpc ListContacts(ListContactsRequest) returns (ListContactsResponse);
+  rpc UpsertContactByPhone(UpsertContactByPhoneRequest) returns (Contact);
+
+  // Leads
+  rpc CreateLead(CreateLeadRequest) returns (Lead);
+  rpc UpdateLead(UpdateLeadRequest) returns (Lead);
+  rpc ListLeads(ListLeadsRequest) returns (ListLeadsResponse);
+  rpc UpdateLifecycleStage(UpdateLifecycleStageRequest) returns (Lead);
+
+  // Auth
+  rpc CreateUser(CreateUserRequest) returns (User);
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+
+  // Organizations
+  rpc ListOrganizationsByUser(ListOrganizationsByUserRequest) returns (ListOrganizationsByUserResponse);
+}
+
+// ─── Tenant ────────────────────────────────────────────────
+
+message Tenant {
+  string id          = 1;
+  string name        = 2;
+  string waba_id     = 3;
+  string phone_number_id = 4;
+  string access_token = 5;  // encrypted at rest
+  TenantStatus status = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+enum TenantStatus {
+  TENANT_PENDING  = 0;
+  TENANT_ACTIVE   = 1;
+  TENANT_SUSPENDED = 2;
+}
+
+message CreateTenantRequest {
+  string name        = 1;
+  string waba_id     = 2;
+  string access_token = 3;
+}
+
+message GetTenantRequest { string id = 1; }
+message UpdateTenantRequest {
+  string id          = 1;
+  string name        = 2;
+  string phone_number_id = 3;
+  TenantStatus status = 4;
+}
+
+// ─── Contact ────────────────────────────────────────────────
+
+message Contact {
+  string id          = 1;
+  string tenant_id   = 2;
+  string phone       = 3;
+  string name        = 4;
+  string email       = 5;
+  bool   opted_in    = 6;
+  LifecycleStage lifecycle_stage = 7;
+  map<string, string> custom_fields = 8;
+  repeated string tags = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp last_seen_at = 11;
+}
+
+enum LifecycleStage {
+  STAGE_UNKNOWN    = 0;
+  STAGE_LEAD       = 1;
+  STAGE_MQL        = 2;
+  STAGE_SQL        = 3;
+  STAGE_CUSTOMER   = 4;
+  STAGE_CHURNED    = 5;
+}
+
+message CreateContactRequest {
+  string tenant_id = 1;
+  string phone     = 2;
+  string name      = 3;
+  string email     = 4;
+}
+
+message GetContactRequest     { string id = 1; string tenant_id = 2; }
+message UpdateContactRequest  { Contact contact = 1; }
+message UpsertContactByPhoneRequest {
+  string tenant_id = 1;
+  string phone     = 2;
+  string name      = 3;
+}
+
+message ListContactsRequest {
+  string tenant_id  = 1;
+  int32  page       = 2;
+  int32  page_size  = 3;
+  string search     = 4;
+  repeated string tags = 5;
+  LifecycleStage lifecycle_stage = 6;
+}
+
+message ListContactsResponse {
+  repeated Contact contacts = 1;
+  int32 total = 2;
+}
+
+// ─── Lead ───────────────────────────────────────────────────
+
+message Lead {
+  string id          = 1;
+  string tenant_id   = 2;
+  string contact_id  = 3;
+  string title       = 4;
+  double value       = 5;
+  LeadStatus status  = 6;
+  LifecycleStage lifecycle_stage = 7;
+  string assigned_to = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+enum LeadStatus {
+  LEAD_OPEN   = 0;
+  LEAD_WON    = 1;
+  LEAD_LOST   = 2;
+}
+
+message CreateLeadRequest {
+  string tenant_id  = 1;
+  string contact_id = 2;
+  string title      = 3;
+  double value      = 4;
+}
+
+message UpdateLeadRequest    { Lead lead = 1; }
+message ListLeadsRequest     { string tenant_id = 1; int32 page = 2; int32 page_size = 3; }
+message ListLeadsResponse    { repeated Lead leads = 1; int32 total = 2; }
+message UpdateLifecycleStageRequest {
+  string lead_id = 1;
+  LifecycleStage stage = 2;
+}
+
+// ─── Auth ───────────────────────────────────────────────────
+
+message User {
+  string id        = 1;
+  string tenant_id = 2;
+  string email     = 3;
+  string name      = 4;
+  UserRole role    = 5;
+}
+
+enum UserRole {
+  ROLE_AGENT   = 0;
+  ROLE_ADMIN   = 1;
+  ROLE_OWNER   = 2;
+}
+
+message CreateUserRequest {
+  string tenant_id = 1;
+  string email     = 2;
+  string password  = 3;
+  string name      = 4;
+  UserRole role    = 5;
+}
+
+message AuthenticateUserRequest { string email = 1; string password = 2; }
+message AuthResponse { string token = 1; User user = 2; }
+message ValidateTokenRequest    { string token = 1; }
+message ValidateTokenResponse   { bool valid = 1; User user = 2; }
+
+// ─── CRM Organizations ──────────────────────────────────────
+
+message CrmOrganization {
+  string id            = 1;
+  string user_id       = 2;
+  string full_name     = 3;
+  string business_name = 4;
+  string business_info = 5;
+  bool   active        = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message ListOrganizationsByUserRequest {
+  string user_id = 1;
+}
+
+message ListOrganizationsByUserResponse {
+  repeated CrmOrganization organizations = 1;
+}

@@ -1,0 +1,274 @@
+[
+  {
+    "title": "Create a new customer",
+    "description": "",
+    "type": "create_customer"
+  },
+
+
+  {
+    "label": "",
+    "section": "Customer Type",
+    "description": "",
+    "hint": "",
+    "order": 1,
+    "fieldTypeID": 3,
+    "fieldTypeName": "Radio Button",
+    "validations": [
+      {
+        "rule": "6",
+        "message": "Text must be greater than 6",
+        "key": "minLength"
+      }
+    ],
+    "slug": "customer_type",
+    "options": [{"label": "Individual", "value": "Individual"}, {"label": "Business", "value": "Business"}],
+    "required": true
+  },
+  {
+    "label": "First Name",
+    "section": "Customer overview",
+    "hint": "Enter customer first name here",
+    "slug": "first_name",
+    "description": "",
+    "order": 2,
+    "fieldTypeID": 1,
+    "fieldTypeName": "Short Text",
+    "validations": [
+      {
+        "rule": "1",
+        "message": "First name must be greater than 1",
+        "key": "minLength"
+      }
+    ],
+    "configs": [
+      {
+        "valueType": "string",
+        "description": "Customer type must be individual",
+        "fieldValue": "Individual",
+        "key": "showIf",
+        "fieldSlug": "customer_type"
+      }
+    ]
+  },
+  {
+    "label": "Last Name",
+    "section": "Customer overview",
+    "hint": "Enter customer last name here",
+    "slug": "last_name",
+    "description": "",
+    "order": 2,
+    "fieldTypeID": 1,
+    "fieldTypeName": "Short Text",
+    "validations": [
+      {
+        "rule": "1",
+        "message": "Last name must be greater than 1",
+        "key": "minLength"
+      }
+    ],
+    "configs": [
+      {
+        "valueType": "string",
+        "description": "Customer type must be individual",
+        "fieldValue": "Individual",
+        "key": "showIf",
+        "fieldSlug": "customer_type"
+      }
+    ]
+  },
+  {
+    "label": "Company Name",
+    "section": "Customer overview",
+    "hint": "Enter company name here",
+    "slug": "company_name",
+    "description": "",
+    "order": 2,
+    "fieldTypeID": 1,
+    "fieldTypeName": "Short Text",
+    "validations": [
+      {
+        "rule": "1",
+        "message": "Company name must be greater than 1",
+        "key": "minLength"
+      }
+    ],
+    "configs": [
+      {
+        "valueType": "string",
+        "description": "Customer type must be company",
+        "fieldValue": "Business",
+        "key": "showIf",
+        "fieldSlug": "customer_type"
+      }
+    ]
+  },
+  {
+    "label": "Email",
+    "section": "Customer overview",
+    "hint": "Enter customer email here",
+    "description": "",
+    "order": 3,
+    "fieldTypeID": 15,
+    "fieldTypeName": "Email",
+    "slug": "email",
+    "validations": [
+      {
+        "rule": "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+        "message": "Must be a valid email Address",
+        "key": "regex"
+      }
+    ],
+    "configs": [
+      {
+        "valueType": "boolean",
+        "description": "Add Email",
+        "fieldValue": "true",
+        "key": "multiples",
+        "fieldId": "self"
+      }
+    ],
+    "required": false
+  },
+  {
+    "label": "Phone number",
+    "section": "Customer overview",
+    "hint": "Enter customer phone number here",
+    "description": "",
+    "order": 4,
+    "slug": "phone_number",
+    "fieldTypeID": 16,
+    "fieldTypeName": "Phone Number",
+    "validations": [
+      {
+        "rule": "^\\+?[0-9]{7,15}$",
+        "message": "Must be a valid phone number",
+        "key": "regex"
+      }
+    ],
+    "configs": [
+      {
+        "valueType": "boolean",
+        "description": "Add phone",
+        "fieldValue": "true",
+        "key": "multiples",
+        "fieldId": "self"
+      }
+    ],
+    "required": false
+  },
+  {
+    "label": "",
+    "section": "Customer overview",
+    "hint": "",
+    "description": "",
+    "order": 5,
+    "slug": "subscribe_marketing_email",
+    "fieldTypeID": 4,
+    "fieldTypeName": "Checkbox",
+    "validations": [],
+    "configs": [],
+    "options": [
+      {
+        "label": "Subscribe Customers to receive marketing emails",
+        "value": "subscribe_marketing_email"
+      },
+      {
+        "label": "Subscribe Customers to receive SMS/WhatsApp marketing text messages ",
+        "value": "subscribe_sms"
+      }
+    ],
+    "required": false,
+    "alert": [
+      {
+        "type": "success",
+        "value": "You should ask your customers for permission before you subscribe them to your marketing emails or SMS",
+        "icon": "info"
+      }
+    ]
+  },
+
+
+
+
+  {
+    "label": "Country",
+    "section": "Address",
+    "hint": "Select customer country",
+    "description": "",
+    "order": 8,
+    "slug": "country",
+    "fieldTypeID": 20,
+    "fieldTypeName": "Country",
+    "validations": []
+  },
+  {
+    "label": "State/Province",
+    "section": "Address",
+    "hint": "Enter customer state or province",
+    "description": "",
+    "order": 9,
+    "slug": "state",
+    "fieldTypeID": 21,
+    "fieldTypeName": "State",
+    "validations": [],
+    "configs": []
+  },
+  {
+    "label": "City",
+    "section": "Address",
+    "hint": "Enter customer city",
+    "description": "",
+    "order": 11,
+    "slug": "city",
+    "fieldTypeID": 22,
+    "fieldTypeName": "City",
+    "validations": []
+  },
+  {
+    "label": "Zip/Postal Code",
+    "section": "Address",
+    "hint": "Enter zip or postal code",
+    "description": "",
+    "order": 12,
+    "slug": "postal_code",
+    "fieldTypeID": 1,
+    "fieldTypeName": "Short Text",
+    "validations": [
+      {
+        "rule": "^[0-9A-Za-z\\- ]{3,10}$",
+        "message": "Must be a valid postal code",
+        "key": "regex"
+      }
+    ]
+  },
+  {
+    "label": "Street Address",
+    "section": "Address",
+    "hint": "Enter street address",
+    "description": "",
+    "order": 10,
+    "slug": "address",
+    "fieldTypeID": 2,
+    "fieldTypeName": "Long Text",
+    "validations": [
+      {
+        "rule": "5",
+        "message": "Address must be greater than 5 characters",
+        "key": "minLength"
+      }
+    ]
+  },
+  {
+    "label": "",
+    "section": "Labels",
+    "hint": "",
+    "description": "",
+    "order": 13,
+    "slug": "customer_tags",
+    "fieldTypeID": 23,
+    "fieldTypeName": "Tags",
+    "validations": []
+  }
+
+]

@@ -1,0 +1,24 @@
+api:
+  dashboard: true
+  insecure: true # disable in production; use basic auth or oauth2 middleware
+
+entryPoints:
+  web:
+    address: ":80"
+  # Uncomment for TLS in production:
+  # websecure:
+  #   address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: usegro_network
+  file:
+    filename: /dynamic.yml
+    watch: true
+
+log:
+  level: INFO
+
+accessLog: {}

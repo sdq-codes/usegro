@@ -1,0 +1,158 @@
+syntax = "proto3";
+package whatsapp;
+option go_package = "github.com/usegro/proto/whatsapp";
+
+import "google/protobuf/timestamp.proto";
+
+// ─── Inbound event from Node.js Gateway → Go Messaging ─────
+
+message InboundMessage {
+  string message_id        = 1;
+  string waba_id           = 2;  // which tenant's WABA
+  string phone_number_id   = 3;
+  string from              = 4;  // sender's phone number
+  string to                = 5;
+  MessageType type         = 6;
+  MessageContent content   = 7;
+  google.protobuf.Timestamp timestamp = 8;
+  Contact contact          = 9;
+}
+
+message MessageContent {
+  oneof value {
+    TextMessage   text     = 1;
+    MediaMessage  media    = 2;
+    LocationMessage location = 3;
+    InteractiveReply interactive = 4;
+    ButtonReply   button   = 5;
+  }
+}
+
+message TextMessage {
+  string body = 1;
+}
+
+message MediaMessage {
+  string media_id  = 1;
+  string mime_type = 2;
+  string sha256    = 3;
+  string caption   = 4;
+  string filename  = 5;  // documents only
+}
+
+message LocationMessage {
+  double latitude  = 1;
+  double longitude = 2;
+  string name      = 3;
+  string address   = 4;
+}
+
+message InteractiveReply {
+  string id    = 1;
+  string title = 2;
+  string description = 3;
+}
+
+message ButtonReply {
+  string id    = 1;
+  string title = 2;
+}
+
+message Contact {
+  string wa_id = 1;
+  string name  = 2;
+}
+
+// ─── Outbound message Go Messaging → Node.js Gateway ───────
+
+message OutboundMessage {
+  string to              = 1;
+  string phone_number_id = 2;
+  string waba_id         = 3;
+  OutboundContent content = 4;
+  string idempotency_key = 5;  // prevent duplicate sends
+}
+
+message OutboundContent {
+  oneof value {
+    TextMessage       text        = 1;
+    TemplateMessage   template    = 2;
+    MediaMessage      media       = 3;
+    InteractiveMessage interactive = 4;
+  }
+}
+
+message TemplateMessage {
+  string name     = 1;
+  string language = 2;
+  repeated TemplateComponent components = 3;
+}
+
+message TemplateComponent {
+  string type = 1;  // header, body, button
+  repeated TemplateParameter parameters = 2;
+}
+
+message TemplateParameter {
+  string type  = 1;  // text, image, document, video
+  string value = 2;
+}
+
+message InteractiveMessage {
+  string type   = 1;  // button, list
+  InteractiveBody body = 2;
+  repeated InteractiveButton buttons = 3;
+  repeated InteractiveSection sections = 4;
+}
+
+message InteractiveBody {
+  string text = 1;
+}
+
+message InteractiveButton {
+  string id    = 1;
+  string title = 2;
+}
+
+message InteractiveSection {
+  string title = 1;
+  repeated InteractiveSectionRow rows = 2;
+}
+
+message InteractiveSectionRow {
+  string id          = 1;
+  string title       = 2;
+  string description = 3;
+}
+
+// ─── Status update ─────────────────────────────────────────
+
+message StatusUpdate {
+  string message_id  = 1;
+  string waba_id     = 2;
+  MessageStatus status = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  string recipient_id = 5;
+}
+
+enum MessageStatus {
+  STATUS_UNKNOWN   = 0;
+  STATUS_SENT      = 1;
+  STATUS_DELIVERED = 2;
+  STATUS_READ      = 3;
+  STATUS_FAILED    = 4;
+}
+
+enum MessageType {
+  TYPE_UNKNOWN     = 0;
+  TYPE_TEXT        = 1;
+  TYPE_IMAGE       = 2;
+  TYPE_VIDEO       = 3;
+  TYPE_AUDIO       = 4;
+  TYPE_DOCUMENT    = 5;
+  TYPE_LOCATION    = 6;
+  TYPE_CONTACTS    = 7;
+  TYPE_INTERACTIVE = 8;
+  TYPE_BUTTON      = 9;
+  TYPE_STICKER     = 10;
+}
