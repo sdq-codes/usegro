@@ -141,6 +141,8 @@ resource "aws_ecs_task_definition" "crm" {
       { name = "DYNAMO_ENDPOINT", value = "" },
       { name = "DYNAMO_REGION", value = var.aws_region },
       { name = "DYNAMO_FORM_TABLE_NAME", value = "forms" },
+      { name = "FRONTEND_URL", value = var.domain_name != "" ? "https://${var.domain_name}" : "" },
+      { name = "ALB_URL", value = "http://${aws_lb.main.dns_name}" },
     ])
 
     secrets = local.common_go_secrets
