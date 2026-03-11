@@ -24,15 +24,11 @@ let api: AxiosInstance
 
 export const useApi = () => {
   if (!api) {
-    console.log("Creating API instance")
-    alert("Hello World")
-    console.log(process.env.NUXT_PUBLIC_API_BASE)
     api = axios.create({
       baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://usegro-production-alb-973426588.eu-west-1.elb.amazonaws.com/api/v1",
       timeout: 10000,
       headers: { "Content-Type": "application/json" },
     })
-
     // Attach access token + CRM-ID on every request
     api.interceptors.request.use((config) => {
       if (accessToken) {
