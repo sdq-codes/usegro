@@ -16,6 +16,7 @@ func CrmRouter(v1 fiber.Router, db *gorm.DB, rdb *redis.Client, dynamodbForms *d
 
 	// Tags — nested under /crm/tags; CRM ID supplied via X-CRM-ID header
 	crmTagsAPIGroup := crmUserOrganizationAPIGroup.Group("/tags")
+
 	crmTagController := crm.NewTagController(crmService.NewTagService(dynamodbForms))
 
 	crmTagsAPIGroup.Post("", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmTagController.CreateTag)
