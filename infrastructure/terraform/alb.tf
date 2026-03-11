@@ -52,6 +52,25 @@ resource "aws_lb_target_group" "crm" {
   tags = { Name = "${local.name}-crm-tg" }
 }
 
+resource "aws_lb_target_group" "frontend" {
+  name        = "${local.name}-frontend-tg"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    matcher             = "200"
+  }
+
+  tags = { Name = "${local.name}-frontend-tg" }
+}
+
 # ─── HTTP Listener ────────────────────────────────────────────────────────────
 
 resource "aws_lb_listener" "http" {
@@ -112,6 +131,21 @@ resource "aws_lb_listener_rule" "http_base" {
   }
 }
 
+resource "aws_lb_listener_rule" "http_frontend" {
+  count        = var.certificate_arn == "" ? 1 : 0
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 300
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend.arn
+  }
+
+  condition {
+    path_pattern { values = ["/*"] }
+  }
+}
+
 # ─── HTTPS Listener ──────────────────────────────────────────────────────────
 
 resource "aws_lb_listener" "https" {
@@ -159,5 +193,20 @@ resource "aws_lb_listener_rule" "https_base" {
 
   condition {
     path_pattern { values = ["/api/v1/base*"] }
+  }
+}
+
+resource "aws_lb_listener_rule" "https_frontend" {
+  count        = var.certificate_arn != "" ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 300
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend.arn
+  }
+
+  condition {
+    path_pattern { values = ["/*"] }
   }
 }
