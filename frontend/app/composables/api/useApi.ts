@@ -24,6 +24,9 @@ let api: AxiosInstance
 
 export const useApi = () => {
   if (!api) {
+    console.log("Creating API instance")
+    alert("Hello World")
+    console.log(process.env.NUXT_PUBLIC_API_BASE)
     api = axios.create({
       baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://localhost/api/v1",
       timeout: 10000,
