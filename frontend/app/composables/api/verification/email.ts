@@ -9,7 +9,7 @@ export const useVerificationEmailAPI = () => {
 
   const ResendVerificationEmail = async (): Promise<ApiResult<LoggedInUserResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.get<LoggedInUserResponse>("/verification/email/resend")
+      const response = await api.get<LoggedInUserResponse>("/base/verification/email/resend")
 
       return { success: true, data: response.data, headers: response.headers }
     } catch (error: unknown) {
@@ -21,7 +21,7 @@ export const useVerificationEmailAPI = () => {
     data: EmailVerificationOtpPayload
   ): Promise<ApiResult<EmailVerificationOtpResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/verification/email", {
+      const response = await api.post("/base/verification/email", {
         token_hash: data.code
       })
 

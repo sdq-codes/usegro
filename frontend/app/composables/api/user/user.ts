@@ -16,7 +16,7 @@ export const useUserAPI = () => {
     let response;
 
     try {
-      response = await api.get<LoggedInUserResponse>("/user")
+      response = await api.get<LoggedInUserResponse>("/base/user")
     } catch (error: unknown) {
       return { success: false, error: error.response?.data?.message || "Failed to fetch user" }
     }
