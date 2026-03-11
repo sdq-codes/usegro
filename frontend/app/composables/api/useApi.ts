@@ -28,7 +28,7 @@ export const useApi = () => {
     alert("Hello World")
     console.log(process.env.NUXT_PUBLIC_API_BASE)
     api = axios.create({
-      baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://localhost/api/v1",
+      baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://usegro-production-alb-973426588.eu-west-1.elb.amazonaws.com/api/v1",
       timeout: 10000,
       headers: { "Content-Type": "application/json" },
     })
