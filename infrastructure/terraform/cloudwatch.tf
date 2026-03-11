@@ -1,5 +1,5 @@
 locals {
-  log_services = ["base", "crm"]
+  log_services = ["base", "crm", "frontend"]
 }
 
 resource "aws_cloudwatch_log_group" "services" {
