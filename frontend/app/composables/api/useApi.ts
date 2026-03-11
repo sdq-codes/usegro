@@ -29,7 +29,6 @@ export const useApi = () => {
       timeout: 10000,
       headers: { "Content-Type": "application/json" },
     })
-
     // Attach access token + CRM-ID on every request
     api.interceptors.request.use((config) => {
       if (accessToken) {
