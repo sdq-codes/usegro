@@ -13,7 +13,7 @@ export const useAuthentication = () => {
 
   const CheckEmailExists = async (email: string): Promise<{ exists: boolean; errors?: string[] }> => {
     try {
-      const response = await api.post("/authentication/email/exist", { email })
+      const response = await api.post("/base/authentication/email/exist", { email })
       const exists = response.data?.responseMessage === "Email already exists"
       return { exists }
     } catch (error: unknown) {
@@ -29,7 +29,7 @@ export const useAuthentication = () => {
     data: RegisterUserPayload
   ): Promise<ApiResult<RegisterUserResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post<RegisterUserResponse>("/authentication/register", {
+      const response = await api.post<RegisterUserResponse>("/base/authentication/register", {
         email: data.email,
         password: data.password,
       })
@@ -44,7 +44,7 @@ export const useAuthentication = () => {
     data: RegisterUserPayload
   ): Promise<ApiResult<RegisterUserResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/authentication/login", {
+      const response = await api.post("/base/authentication/login", {
         email: data.email,
         password: data.password,
       })
@@ -57,7 +57,7 @@ export const useAuthentication = () => {
 
   const Logout = async (): Promise<ApiResult<unknown, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/authentication/logout", {
+      const response = await api.post("/base/authentication/logout", {
         refresh_token: localStorage.getItem("refresh_token"),
       })
       return { success: true, data: response.data, headers: response.headers }
@@ -74,7 +74,7 @@ export const useAuthentication = () => {
     if (!refreshToken) return false
 
     try {
-      const { data } = await api.post("/authentication/refresh", {
+      const { data } = await api.post("/base/authentication/refresh", {
         refresh_token: refreshToken,
       })
       setAccessToken(data.data.access_token)
@@ -90,7 +90,7 @@ export const useAuthentication = () => {
     data: ForgotPasswordPayload
   ): Promise<ApiResult<ForgotPasswordResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/authentication/forgot-password", {
+      const response = await api.post("/base/authentication/forgot-password", {
         email: data.email,
       })
 
@@ -104,7 +104,7 @@ export const useAuthentication = () => {
     data: ResetPasswordPayload
   ): Promise<ApiResult<ForgotPasswordResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/authentication/reset-password", {
+      const response = await api.post("/base/authentication/reset-password", {
         password: data.password,
         confirm_password: data.confirm_password,
         token: data.token,
@@ -117,7 +117,7 @@ export const useAuthentication = () => {
 
   const RequestEmailCode = async (email: string): Promise<ApiResult<unknown, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/authentication/email-code/request", { email })
+      const response = await api.post("/base/authentication/email-code/request", { email })
       return { success: true, data: response.data, headers: response.headers }
     } catch (error: unknown) {
       return { success: false, error: error.response?.data?.response_message || "Failed to send code" }
@@ -129,7 +129,7 @@ export const useAuthentication = () => {
     code: string
   ): Promise<ApiResult<RegisterUserResponse, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/authentication/email-code/verify", { email, code })
+      const response = await api.post("/base/authentication/email-code/verify", { email, code })
       return { success: true, data: response.data, headers: response.headers }
     } catch (error: unknown) {
       return { success: false, error: error.response?.data?.response_message || "Invalid or expired code" }

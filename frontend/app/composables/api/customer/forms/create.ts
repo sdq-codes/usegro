@@ -20,7 +20,7 @@ export const useFormAPI = () => {
   const CreateCustomer = async (formId: string, versionId: string, formData: SubmissionPayload): Promise<ApiResult<null, RawAxiosResponseHeaders>> => {
     try {
       const response = await api.post(
-        `/forms/${formId}/version/${versionId}/submission`,
+        `/base/forms/${formId}/version/${versionId}/submission`,
         formData
       )
 
