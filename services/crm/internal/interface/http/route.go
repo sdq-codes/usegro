@@ -25,6 +25,10 @@ func RegisterRoute(r *fiber.App) {
 	}
 	dynamodbForms := dynamo.DynamoClient
 
+	r.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	api := r.Group("/api")
 	v1 := api.Group("/v1")
 

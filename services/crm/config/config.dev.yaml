@@ -28,6 +28,7 @@ postgres:
   schema: "public"
   username: "usegro"
   password: "" # set via POSTGRES_PASSWORD env var
+  sslMode: "disable"
 
 dynamodbForms:
   awsRegion: "eu-west-1"

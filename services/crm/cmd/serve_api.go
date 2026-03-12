@@ -16,6 +16,7 @@ import (
 	"github.com/usegro/services/crm/internal/interface/validation"
 	"github.com/usegro/services/crm/internal/logger"
 	"github.com/usegro/services/crm/internal/router"
+	"github.com/usegro/services/crm/pkg/amplitude"
 )
 
 func init() {
@@ -30,6 +31,7 @@ var serveAPICmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Setup all the required dependencies
 		setupAll()
+		amplitude.Init()
 		logger.Log.Info("Starting server...")
 		// Create http router
 		r := router.NewFiberRouter()

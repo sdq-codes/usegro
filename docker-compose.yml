@@ -72,6 +72,10 @@ services:
       dockerfile: services/base/Dockerfile
     container_name: usegro_base
     env_file: .env
+    volumes:
+      - ./services/base:/app
+      - ./proto:/proto
+      - base_mod_cache:/root/go/pkg/mod
     expose:
       - "8080"
     depends_on:
@@ -96,6 +100,10 @@ services:
       dockerfile: services/crm/Dockerfile
     container_name: usegro_crm
     env_file: .env
+    volumes:
+      - ./services/crm:/app
+      - ./proto:/proto
+      - crm_mod_cache:/root/go/pkg/mod
     expose:
       - "8080"   # HTTP (Fiber) — routed via Traefik
       - "50051"  # gRPC — called internally by messaging/billing/analytics
@@ -210,3 +218,5 @@ volumes:
   postgres_data:
   redis_data:
   dynamodb_data:
+  base_mod_cache:
+  crm_mod_cache:

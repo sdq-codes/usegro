@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/usegro/services/crm/internal/apps/crm/models"
 	"github.com/usegro/services/crm/internal/apps/crm/repositories"
+	"github.com/usegro/services/crm/pkg/amplitude"
 )
 
 type TagService struct {
@@ -31,7 +32,16 @@ func (s *TagService) CreateTag(ctx context.Context, tag dto.TagCreateDTO, crmId 
 		Status:    "active",
 		Tag:       tag.Tag,
 	}
-	return s.tagRepo.CreateTag(ctx, s.dynamo, tagModel)
+	created, err := s.tagRepo.CreateTag(ctx, s.dynamo, tagModel)
+	if err != nil {
+		return nil, err
+	}
+	amplitude.Track(userId.String(), amplitude.EventTagCreated, map[string]interface{}{
+		amplitude.PropCrmID:   crmId,
+		amplitude.PropTagID:   created.SK,
+		amplitude.PropTagName: created.Tag,
+	})
+	return created, nil
 }
 
 // FetchTag retrieves a tag by CRM ID and Tag ID

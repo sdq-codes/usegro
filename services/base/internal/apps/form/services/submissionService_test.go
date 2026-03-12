@@ -130,7 +130,7 @@ func TestCreateSubmission_Success(t *testing.T) {
 	})).Return(nil)
 
 	service := NewFormSubmissionService(mockFormRepo, mockSubRepo, nil)
-	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID)
+	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID, "")
 
 	assert.NoError(t, err)
 	mockFormRepo.AssertExpectations(t)
@@ -156,7 +156,7 @@ func TestCreateSubmission_FormVersionNotFound(t *testing.T) {
 	}
 
 	service := NewFormSubmissionService(mockFormRepo, mockSubRepo, nil)
-	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID)
+	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID, "")
 
 	assert.Error(t, err)
 	assert.Equal(t, expectedError, err)
@@ -188,7 +188,7 @@ func TestCreateSubmission_VersionNotPublished(t *testing.T) {
 	}
 
 	service := NewFormSubmissionService(mockFormRepo, mockSubRepo, nil)
-	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID)
+	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID, "")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "submissions only allowed for published versions")
@@ -227,7 +227,7 @@ func TestCreateSubmission_RepositoryError(t *testing.T) {
 		Return(expectedError)
 
 	service := NewFormSubmissionService(mockFormRepo, mockSubRepo, nil)
-	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID)
+	err := service.CreateSubmission(ctx, formID, versionID, submissionInput, crmID, "")
 
 	assert.Error(t, err)
 	assert.Equal(t, expectedError, err)

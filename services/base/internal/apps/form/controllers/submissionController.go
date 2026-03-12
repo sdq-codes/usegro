@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sdq-codes/usegro-api/internal/apps/form/dtos"
 	"github.com/sdq-codes/usegro-api/internal/apps/form/services"
+	"github.com/sdq-codes/usegro-api/internal/helper/auth"
 	"github.com/sdq-codes/usegro-api/internal/interface/response"
 	"github.com/sdq-codes/usegro-api/pkg/exception"
 )
@@ -38,12 +39,17 @@ func (ctl *FormSubmissionController) CreateSubmission(c *fiber.Ctx) error {
 	versionID := c.Params("versionID")
 	crmId := c.Locals("crmID").(string)
 
+	var userID string
+	if claims, err := auth.AuthUser(c); err == nil {
+		userID = claims.User.ID.String()
+	}
+
 	var req dtos.CreateSubmissionInput
 	if err := c.BodyParser(&req); err != nil {
 		return exception.InvalidRequestBodyError
 	}
 
-	if err := ctl.service.CreateSubmission(c.Context(), formID, versionID, req, crmId); err != nil {
+	if err := ctl.service.CreateSubmission(c.Context(), formID, versionID, req, crmId, userID); err != nil {
 		return err
 	}
 

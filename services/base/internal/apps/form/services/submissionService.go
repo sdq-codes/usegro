@@ -7,6 +7,7 @@ import (
 	"github.com/sdq-codes/usegro-api/internal/apps/form/dtos"
 	"github.com/sdq-codes/usegro-api/internal/apps/form/models"
 	"github.com/sdq-codes/usegro-api/internal/apps/form/repositories"
+	"github.com/sdq-codes/usegro-api/pkg/amplitude"
 )
 
 type FormSubmissionService struct {
@@ -25,6 +26,7 @@ func (s *FormSubmissionService) CreateSubmission(
 	versionID string,
 	req dtos.CreateSubmissionInput,
 	crmID string,
+	userID string,
 ) error {
 	form, err := s.formRepo.FetchFormVersion(ctx, s.formDynamo, formID, versionID)
 	if err != nil {
@@ -53,7 +55,15 @@ func (s *FormSubmissionService) CreateSubmission(
 		Type:          models.SubmissionType(req.Type),
 		VersionSnap:   req.VersionSnap,
 	}
-	return s.submissionRepo.CreateSubmission(ctx, s.formDynamo, submission)
+	if err := s.submissionRepo.CreateSubmission(ctx, s.formDynamo, submission); err != nil {
+		return err
+	}
+	amplitude.Track(userID, amplitude.EventContactCreated, map[string]interface{}{
+		"crm_id":  crmID,
+		"form_id": formID,
+		"type":    string(submission.Type),
+	})
+	return nil
 }
 
 func (s *FormSubmissionService) ArchiveSubmission(
