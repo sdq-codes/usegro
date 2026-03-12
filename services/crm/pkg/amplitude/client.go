@@ -3,7 +3,6 @@ package amplitude
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/usegro/services/crm/internal/logger"
 	"math"
 	"net/http"
 	"os"
@@ -11,7 +10,7 @@ import (
 	"time"
 )
 
-const httpAPIURL = "https://api2.amplitude.com/2/httpapi"
+const httpAPIURL = "https://api.eu.amplitude.com/2/httpapi"
 
 // Event represents a single Amplitude event payload.
 type Event struct {
@@ -55,12 +54,6 @@ func Init() {
 // Track fires a single event asynchronously. No-ops when the client is not
 // initialised or AMPLITUDE_API_KEY is unset, so it never blocks or panics.
 func Track(userID, eventType string, properties map[string]interface{}) {
-	logger.Log.Info("defaultClient Amplitude client")
-	logger.Log.Info("defaultClient Amplitude client")
-	logger.Log.Info("defaultClient Amplitude client")
-	logger.Log.Info("defaultClient Amplitude client")
-	logger.Log.Info("defaultClient Amplitude client")
-	logger.Log.Info("t")
 	if defaultClient == nil || defaultClient.apiKey == "" {
 		return
 	}
@@ -69,13 +62,6 @@ func Track(userID, eventType string, properties map[string]interface{}) {
 	}
 	properties["environment"] = defaultClient.environment
 	properties["app_version"] = defaultClient.appVersion
-
-	logger.Log.Info("sending Amplitude client")
-	logger.Log.Info("sending Amplitude client")
-	logger.Log.Info("sending Amplitude client")
-	logger.Log.Info("sending Amplitude client")
-	logger.Log.Info("sending Amplitude client")
-	logger.Log.Info("sending Amplitude client")
 
 	go defaultClient.sendWithRetry([]Event{{
 		UserID:          userID,

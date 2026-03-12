@@ -10,6 +10,7 @@ import (
 	"github.com/sdq-codes/usegro-api/internal/apps/base/models"
 	"github.com/sdq-codes/usegro-api/internal/apps/base/repositories"
 	"github.com/sdq-codes/usegro-api/internal/logger"
+	"github.com/sdq-codes/usegro-api/pkg/amplitude"
 	"github.com/sdq-codes/usegro-api/pkg/exception"
 	"gorm.io/gorm"
 )
@@ -71,5 +72,8 @@ func (s *EmailService) EmailVerification(ctx context.Context, code string, user 
 		return exception.EmailVerificationError
 	}
 	tx.Commit()
+	amplitude.Track(user.ID.String(), amplitude.EventEmailVerified, map[string]interface{}{
+		amplitude.PropEmail: user.Email,
+	})
 	return nil
 }
