@@ -14,9 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/uuid"
+	"github.com/spf13/cobra"
 	internalConfig "github.com/usegro/services/crm/config"
 	"github.com/usegro/services/crm/internal/logger"
-	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
@@ -48,19 +48,25 @@ var seedCommand = &cobra.Command{
 
 		ctx := context.Background()
 
-		cfg, err := config.LoadDefaultConfig(context.TODO(),
-			config.WithRegion(dynamoCfg.AwsRegion),
-			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{URL: dynamoCfg.DynamoEndpoint}, nil
-				})),
-			config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-				Value: aws.Credentials{
-					AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "",
-					Source: "Mock credentials used above for local instance",
-				},
-			}),
-		)
+		var cfgOpts []func(*config.LoadOptions) error
+		cfgOpts = append(cfgOpts, config.WithRegion(dynamoCfg.AwsRegion))
+
+		if dynamoCfg.DynamoEndpoint != "" {
+			// Local DynamoDB
+			cfgOpts = append(cfgOpts,
+				config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+					func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+						return aws.Endpoint{URL: dynamoCfg.DynamoEndpoint}, nil
+					})),
+				config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+					Value: aws.Credentials{
+						AccessKeyID: "dummy", SecretAccessKey: "dummy",
+					},
+				}),
+			)
+		}
+
+		cfg, err := config.LoadDefaultConfig(context.TODO(), cfgOpts...)
 		if err != nil {
 			logger.Log.Fatal("Unable to load AWS SDK config", zap.Error(err))
 		}

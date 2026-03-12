@@ -71,6 +71,7 @@ type Postgres struct {
 	Password        string `yaml:"password"`
 	Database        string `yaml:"database"`
 	Schema          string `yaml:"schema"`
+	SSLMode         string `yaml:"sslMode"`
 	MaxConnections  int32  `yaml:"maxConnections"`
 	MaxConnIdleTime int32  `yaml:"maxConnIdleTime"`
 }
@@ -159,6 +160,7 @@ func SetConfig(configFile string) {
 	viper.AutomaticEnv()
 	bindEnvs := map[string]string{
 		"postgres.password":   "POSTGRES_PASSWORD",
+		"postgres.sslMode":    "POSTGRES_SSL_MODE",
 		"auth.apiSecret":      "AUTH_API_SECRET",
 		"ses.fromEmail":       "SES_FROM_EMAIL",
 		"google.clientId":     "GOOGLE_CLIENT_ID",

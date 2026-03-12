@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/usegro/services/crm/internal/apps/crm/models"
+	"github.com/usegro/services/crm/internal/logger"
 	"gorm.io/gorm"
 )
 
@@ -48,7 +50,9 @@ func (crm *CRMUserOrganizationRepository) GetCRMUserOrganization(ctx context.Con
 
 func (crm *CRMUserOrganizationRepository) FetchCRMUserOrganization(ctx context.Context, tx *gorm.DB, userId string) (*[]models.CrmUserOrganization, error) {
 	crmUserOrganization := &[]models.CrmUserOrganization{}
+	logger.Log.Info("Fetching CRM User Organization")
 	err := tx.WithContext(ctx).Find(crmUserOrganization, "user_id = ?", userId).Error
+	logger.Log.Info(fmt.Sprintf("%v", crmUserOrganization))
 	return crmUserOrganization, err
 }
 

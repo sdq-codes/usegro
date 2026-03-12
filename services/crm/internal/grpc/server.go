@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"fmt"
+	"github.com/usegro/services/crm/internal/logger"
 	"log"
 	"net"
 	"time"
@@ -33,6 +34,8 @@ func (s *CRMServiceServer) ListOrganizationsByUser(ctx context.Context, req *pb.
 	if req.UserId == "" {
 		return nil, status.Error(codes.InvalidArgument, "user_id is required")
 	}
+
+	logger.Log.Info("It got here ")
 
 	orgs, err := s.repo.FetchCRMUserOrganization(ctx, s.db, req.UserId)
 	if err != nil {

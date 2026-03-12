@@ -7,6 +7,7 @@ import (
 	"github.com/usegro/services/crm/internal/apps/crm/dto"
 	"github.com/usegro/services/crm/internal/apps/crm/models"
 	"github.com/usegro/services/crm/internal/apps/crm/repositories"
+	"github.com/usegro/services/crm/pkg/amplitude"
 	"github.com/usegro/services/crm/pkg/exception"
 	"gorm.io/gorm"
 )
@@ -46,6 +47,10 @@ func (s *CRMUserOrganizationService) CreateCRMUserOrganization(ctx context.Conte
 		return nil, err
 	}
 	tx.Commit()
+	amplitude.Track(userId.String(), amplitude.EventWorkspaceCreated, map[string]interface{}{
+		amplitude.PropWorkspaceID:  CRMUserOrganization.ID.String(),
+		amplitude.PropBusinessName: CRMUserOrganization.BusinessName,
+	})
 	return CRMUserOrganization, nil
 }
 

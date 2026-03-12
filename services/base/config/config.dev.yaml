@@ -25,6 +25,7 @@ postgres:
   schema: "public"
   username: "usegro"
   password: "" # set via POSTGRES_PASSWORD env var
+  sslMode: "disable"
 
 dynamodbForms:
   awsRegion: "eu-west-1"
@@ -71,7 +72,7 @@ sentry:
   debug: false
 
 crmService:
-  address: "localhost:50051"
+  address: "crm:50051"
 
 scheduler:
   timezone: "Africa/Nigeria"

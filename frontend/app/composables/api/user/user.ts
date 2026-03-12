@@ -4,7 +4,6 @@ import type {ApiResult} from "@/composables/helpers/types/api";
 import type { RawAxiosResponseHeaders, AxiosHeaders } from "axios";
 import { navigateTo } from "nuxt/app";
 import { verifications } from "@/composables/helpers/format/verifications";
-import { useCRMAPI } from "@/composables/api/crm/crm";
 
 const ONBOARDING_PATH = "/onboarding";
 const VERIFICATION_PATH = "/verification/email";
@@ -32,11 +31,12 @@ export const useUserAPI = () => {
       return { success: true, data: response.data, headers: response.headers }
     }
 
-    // 2. Email verified, not already on onboarding → check CRM
-    if (currentPath !== ONBOARDING_PATH) {
-      const crmsRes = await useCRMAPI().ListCRMs();
-      const hasCRM = crmsRes.success && Array.isArray(crmsRes.data?.data) && crmsRes.data.data.length > 0;
-      if (!hasCRM) {
+    // 2. Email verified → ensure crm-id is set in localStorage
+    if (process.client && !localStorage.getItem("crm-id")) {
+      const organizations = response.data?.data?.organizations;
+      if (Array.isArray(organizations) && organizations.length > 0) {
+        localStorage.setItem("crm-id", organizations[0].id);
+      } else if (currentPath !== ONBOARDING_PATH) {
         await navigateTo(ONBOARDING_PATH);
         return { success: true, data: response.data, headers: response.headers }
       }

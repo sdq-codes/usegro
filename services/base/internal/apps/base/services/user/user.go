@@ -39,10 +39,10 @@ func (s *Service) GetLoggedInUser(fCtx *fiber.Ctx) (*models.User, []*pb.CrmOrgan
 
 	crmAddr := config.GetConfig().CrmService.Address
 	crmClient, err := grpcclient.NewCRMClient(crmAddr)
-	var orgs []*pb.CrmOrganization
+	var crms []*pb.CrmOrganization
 	if err == nil {
-		orgs, _ = crmClient.ListOrganizationsByUser(fCtx.UserContext(), userID)
+		crms, _ = crmClient.ListOrganizationsByUser(fCtx.UserContext(), userID)
 	}
 
-	return user, orgs, nil
+	return user, crms, nil
 }

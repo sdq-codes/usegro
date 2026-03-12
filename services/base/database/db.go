@@ -42,14 +42,20 @@ func SetUpPostgres() {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
+	sslMode := cfg.SSLMode
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+
 	// Connect using GORM
 	db, err := gorm.Open(postgres.Open(fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%d sslmode=require TimeZone=UTC",
+		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=UTC",
 		cfg.Host,     // host
 		cfg.Username, // user
 		cfg.Password, // password
 		cfg.Database, // dbname
 		cfg.Port,     // port
+		sslMode,      // sslmode
 	)), &gorm.Config{})
 	if err != nil {
 		logger.Log.Fatal("gorm.Open() failed", zap.Error(err))

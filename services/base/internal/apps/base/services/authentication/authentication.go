@@ -23,6 +23,7 @@ import (
 	"github.com/sdq-codes/usegro-api/internal/helper/random"
 	"github.com/sdq-codes/usegro-api/internal/interface/resources/templates/emails"
 	"github.com/sdq-codes/usegro-api/internal/logger"
+	"github.com/sdq-codes/usegro-api/pkg/amplitude"
 	"github.com/sdq-codes/usegro-api/pkg/exception"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -129,6 +130,10 @@ func (s *Service) RegisterUser(ctx context.Context, userDTI dto.RegisterUserDTI)
 	}
 
 	tx.Commit()
+	amplitude.Track(userModel.ID.String(), amplitude.EventUserSignedUp, map[string]interface{}{
+		amplitude.PropEmail:      userModel.Email,
+		amplitude.PropAuthMethod: "email_password",
+	})
 	return userModel, accessToken, refreshToken, nil
 }
 
@@ -168,6 +173,10 @@ func (s *Service) LoginUser(ctx context.Context, loginDTO dto.RegisterUserDTI) (
 	}
 
 	tx.Commit()
+	amplitude.Track(user.ID.String(), amplitude.EventUserLoggedIn, map[string]interface{}{
+		amplitude.PropEmail:      user.Email,
+		amplitude.PropAuthMethod: "email_password",
+	})
 	return user, accessToken, refreshToken, nil
 }
 
@@ -179,7 +188,28 @@ func (s *Service) RefreshTokens(ctx context.Context, rawRefreshToken string) (st
 
 // Logout revokes the refresh token so it cannot be used again.
 func (s *Service) Logout(ctx context.Context, rawRefreshToken string) error {
-	return auth.RevokeRefreshToken(ctx, s.rdb, rawRefreshToken)
+	userID := s.userIDFromRefreshToken(ctx, rawRefreshToken)
+	err := auth.RevokeRefreshToken(ctx, s.rdb, rawRefreshToken)
+	if err == nil && userID != "" {
+		amplitude.Track(userID, amplitude.EventUserLoggedOut, nil)
+	}
+	return err
+}
+
+// userIDFromRefreshToken resolves the user ID stored in Redis for the given raw
+// refresh token without consuming it — used solely for analytics.
+func (s *Service) userIDFromRefreshToken(ctx context.Context, rawToken string) string {
+	h := sha256.Sum256([]byte(rawToken))
+	key := "refresh:" + hex.EncodeToString(h[:])
+	b, err := s.rdb.Get(ctx, key).Bytes()
+	if err != nil {
+		return ""
+	}
+	var u models.User
+	if json.Unmarshal(b, &u) != nil {
+		return ""
+	}
+	return u.ID.String()
 }
 
 // SendPasswordResetEmail generates an opaque token, stores it in Redis, and emails a reset link.
@@ -283,6 +313,7 @@ func (s *Service) ResetUserPassword(ctx context.Context, req dto.ResetPasswordDT
 	}
 
 	tx.Commit()
+	amplitude.Track(userID, amplitude.EventPasswordResetCompleted, nil)
 	return nil
 }
 
@@ -397,6 +428,17 @@ func (s *Service) GoogleLogin(ctx context.Context, code string) (*models.User, s
 	}
 
 	tx.Commit()
+	if userExists {
+		amplitude.Track(user.ID.String(), amplitude.EventUserLoggedIn, map[string]interface{}{
+			amplitude.PropEmail:      googleUser.Email,
+			amplitude.PropAuthMethod: "google",
+		})
+	} else {
+		amplitude.Track(user.ID.String(), amplitude.EventUserSignedUp, map[string]interface{}{
+			amplitude.PropEmail:      googleUser.Email,
+			amplitude.PropAuthMethod: "google",
+		})
+	}
 	return user, accessToken, refreshToken, nil
 }
 
@@ -463,5 +505,9 @@ func (s *Service) VerifyLoginCode(ctx context.Context, req dto.VerifyEmailCodeDT
 		return nil, "", "", err
 	}
 
+	amplitude.Track(user.ID.String(), amplitude.EventUserLoggedIn, map[string]interface{}{
+		amplitude.PropEmail:      req.Email,
+		amplitude.PropAuthMethod: "email_code",
+	})
 	return user, accessToken, refreshToken, nil
 }

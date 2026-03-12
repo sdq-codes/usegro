@@ -29,25 +29,28 @@ var createTablesCommand = &cobra.Command{
 		setUpLogger()
 
 		dynamoCfg := internalConfig.GetConfig().DynamodbForms
-		if dynamoCfg.DynamoEndpoint == "" {
-			logger.Log.Fatal("DynamoDB endpoint not configured (dynamodbForms.dynamoEndpoint)")
-		}
 
 		ctx := context.Background()
 
-		cfg, err := config.LoadDefaultConfig(context.TODO(),
-			config.WithRegion(dynamoCfg.AwsRegion),
-			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{URL: dynamoCfg.DynamoEndpoint}, nil
-				})),
-			config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-				Value: aws.Credentials{
-					AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "",
-					Source: "Mock credentials used above for local instance",
-				},
-			}),
-		)
+		var cfgOpts []func(*config.LoadOptions) error
+		cfgOpts = append(cfgOpts, config.WithRegion(dynamoCfg.AwsRegion))
+
+		if dynamoCfg.DynamoEndpoint != "" {
+			// Local DynamoDB
+			cfgOpts = append(cfgOpts,
+				config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+					func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+						return aws.Endpoint{URL: dynamoCfg.DynamoEndpoint}, nil
+					})),
+				config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+					Value: aws.Credentials{
+						AccessKeyID: "dummy", SecretAccessKey: "dummy",
+					},
+				}),
+			)
+		}
+
+		cfg, err := config.LoadDefaultConfig(context.TODO(), cfgOpts...)
 		if err != nil {
 			logger.Log.Fatal("Unable to load AWS SDK config", zap.Error(err))
 		}

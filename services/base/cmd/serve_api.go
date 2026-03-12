@@ -13,6 +13,7 @@ import (
 	"github.com/sdq-codes/usegro-api/internal/interface/validation"
 	"github.com/sdq-codes/usegro-api/internal/logger"
 	"github.com/sdq-codes/usegro-api/internal/router"
+	"github.com/sdq-codes/usegro-api/pkg/amplitude"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +29,7 @@ var serveAPICmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Setup all the required dependencies
 		setupAll()
+		amplitude.Init()
 		logger.Log.Info("Starting server...")
 		// Create http router
 		r := router.NewFiberRouter()

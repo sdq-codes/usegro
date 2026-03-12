@@ -190,10 +190,10 @@ const router = useRouter()
 onMounted(async () => {
   const fetchUserApiResponse = await useUserAPI().FetchLoggedInUser()
   if (fetchUserApiResponse.success) {
-    // const userVerifications = verifications(fetchUserApiResponse.data?.data?.verifications);
-    // if (userVerifications?.email !== "VERIFIED") {
-    //   await router.push("/verification/email");
-    // }
+    const userVerifications = verifications(fetchUserApiResponse.data?.data?.verifications);
+    if (userVerifications?.email !== "VERIFIED") {
+      await router.push("/verification/email");
+    }
   } else {
     localStorage.clear()
     await router.push("/authentication/login");
