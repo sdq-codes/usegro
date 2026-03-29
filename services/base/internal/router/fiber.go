@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/sdq-codes/usegro-api/config"
 	_ "github.com/sdq-codes/usegro-api/docs"
 	httpInterface "github.com/sdq-codes/usegro-api/internal/interface/http"
 	httpError "github.com/sdq-codes/usegro-api/internal/interface/http/error"
@@ -26,9 +27,13 @@ func NewFiberRouter() *fiber.App {
 
 	// Set up global middleware
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:  "*", // or restrict to your frontend domain
-		AllowHeaders:  "Origin, Content-Type, Accept, Authorization, X-CRM-ID",
-		ExposeHeaders: "Authorization, X-Request-Id, X-CRM-ID", // <- allow frontend to READ Authorization header
+		AllowOriginsFunc: func(origin string) bool {
+			return origin == config.GetConfig().FrontEnd.Url
+		},
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-CRM-ID",
+		ExposeHeaders:    "Authorization, X-Request-Id, X-CRM-ID",
+		AllowMethods:     "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		AllowCredentials: true,
 	}))
 	r.Use(requestid.New())
 	r.Use(recover.New())

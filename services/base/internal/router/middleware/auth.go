@@ -22,7 +22,7 @@ func JwtVerify() fiber.Handler {
 			})
 		}
 
-		tk := &models.Token{}
+		tk := &models.TokenClaims{}
 		_, err := jwt.ParseWithClaims(parts[1], tk, func(token *jwt.Token) (interface{}, error) {
 			return []byte(config.GetConfig().Auth.ApiSecret), nil
 		})

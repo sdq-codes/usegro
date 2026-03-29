@@ -135,6 +135,18 @@ variable "crm_desired_count" {
   default     = 1
 }
 
+variable "catalog_desired_count" {
+  description = "Desired task count for catalog service"
+  type        = number
+  default     = 1
+}
+
+variable "billing_desired_count" {
+  description = "Desired task count for billing service"
+  type        = number
+  default     = 1
+}
+
 
 # ─── Domain ─────────────────────────────────────────────────────────────────
 

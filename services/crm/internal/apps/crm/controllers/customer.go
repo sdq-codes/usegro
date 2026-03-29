@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/usegro/services/crm/internal/apps/crm/services"
 	"github.com/usegro/services/crm/internal/interface/response"
@@ -56,9 +58,12 @@ func (ccc *CRMCustomerController) FetchPublishedCreateCustomerForm(c *fiber.Ctx)
 func (ccc *CRMCustomerController) FetchCrmCustomers(c *fiber.Ctx) error {
 	crmId := c.Locals("crmID").(string)
 
-	customers, err := ccc.service.FetchCrmCustomers(c.Context(), crmId)
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "20"))
+
+	result, err := ccc.service.FetchCrmCustomers(c.Context(), crmId, page, limit)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(response.CommonResponse{
+		return c.Status(fiber.StatusInternalServerError).JSON(response.CommonResponse{
 			ResponseCode:    response.RESOURCE_NOT_FOUND,
 			ResponseMessage: err.Error(),
 		})
@@ -67,7 +72,7 @@ func (ccc *CRMCustomerController) FetchCrmCustomers(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response.CommonResponse{
 		ResponseCode:    response.RESOURCE_FETCHED,
 		ResponseMessage: "CRM customers retrieved successfully",
-		Data:            customers,
+		Data:            result,
 	})
 }
 

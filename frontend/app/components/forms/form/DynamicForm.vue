@@ -146,6 +146,18 @@ const resetForm = () => {
   customFormRefs.value = {}
 }
 
+const emit = defineEmits<{
+  (e: 'update:fields', fields: FormField[]): void
+}>()
+
+const handleLabelChanged = (payload: { slug: string; label: string }) => {
+  const field = formFields.value.find(f => f.slug === payload.slug)
+  if (field) {
+    field.label = payload.label
+    emit('update:fields', [...formFields.value])
+  }
+}
+
 // Expose methods for parent component
 defineExpose({
   resetForm,
@@ -186,6 +198,8 @@ defineExpose({
             v-model="answerMap"
             :fields="dynamicFormField"
             :errors="errors"
+            :editable-labels="key === 'Extra fields'"
+            @label-changed="handleLabelChanged"
           />
         </div>
       </div>

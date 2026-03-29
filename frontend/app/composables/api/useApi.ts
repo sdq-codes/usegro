@@ -1,7 +1,7 @@
 // composables/useApi.ts
 import axios, { type AxiosInstance } from "axios"
 
-// Access token lives in memory — cleared on page refresh (re-hydrated via refresh token)
+// Access token lives in memory — cleared on page refresh (re-hydrated via refresh cookie)
 let accessToken: string | null = null
 
 let isRefreshing = false
@@ -25,11 +25,12 @@ let api: AxiosInstance
 export const useApi = () => {
   if (!api) {
     api = axios.create({
-      // baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://usegro-production-alb-973426588.eu-west-1.elb.amazonaws.com/api/v1",
       baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://localhost/api/v1",
       timeout: 10000,
       headers: { "Content-Type": "application/json" },
+      withCredentials: true, // send HttpOnly refresh_token cookie automatically
     })
+
     // Attach access token + CRM-ID on every request
     api.interceptors.request.use((config) => {
       if (accessToken) {
@@ -42,18 +43,18 @@ export const useApi = () => {
       return config
     })
 
-    // 401 → refresh → retry, with queue to handle parallel failures
+    // 401 → refresh via cookie → retry, with queue to handle parallel failures
     api.interceptors.response.use(
       (response) => response,
       async (error) => {
         const original = error.config
 
         if (error.response?.status === 401 && !original._retry) {
-          if (!localStorage.getItem('refresh_token')) return Promise.reject(error)
+          // Only attempt refresh if we believe a session exists
+          if (!localStorage.getItem('session')) return Promise.reject(error)
           original._retry = true
 
           if (isRefreshing) {
-            // Queue this request until the ongoing refresh completes
             return new Promise<string>((resolve, reject) => {
               queue.push({ resolve, reject })
             }).then((token) => {
@@ -65,18 +66,16 @@ export const useApi = () => {
           isRefreshing = true
 
           try {
-            const { data } = await api.post("/authentication/refresh", {
-              refresh_token: localStorage.getItem("refresh_token"),
-            })
+            // No body needed — the HttpOnly cookie is sent automatically
+            const { data } = await api.post("/base/authentication/refresh")
             accessToken = data.data.access_token
-            localStorage.setItem("refresh_token", data.data.refresh_token)
             processQueue(null, accessToken)
             original.headers.Authorization = `Bearer ${accessToken}`
             return api(original)
           } catch (err) {
             processQueue(err, null)
             accessToken = null
-            localStorage.removeItem("refresh_token")
+            localStorage.removeItem("session")
             window.location.href = "/authentication/login"
             return Promise.reject(err)
           } finally {

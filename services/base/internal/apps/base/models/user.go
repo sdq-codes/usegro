@@ -7,9 +7,11 @@ import (
 )
 
 type User struct {
-	ID       uuid.UUID `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
-	Email    string    `json:"email" gorm:"unique;not null;index:users_email_idx;"`
-	Password string    `gorm:"not null;"`
+	ID           uuid.UUID `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	Email        string    `json:"email" gorm:"unique;not null;index:users_email_idx;"`
+	Password     *string   `gorm:"default:null"`
+	GoogleID     *string   `json:"google_id" gorm:"default:null;index"`
+	AuthProvider string    `json:"auth_provider" gorm:"not null;default:'password'"`
 
 	Verifications []Verification `json:"verifications" gorm:"foreignKey:user_id;constraint:OnDelete:CASCADE"`
 

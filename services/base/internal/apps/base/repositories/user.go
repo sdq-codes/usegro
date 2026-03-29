@@ -39,18 +39,24 @@ func (u *UserRepository) GetUsersWithPagination(ctx context.Context, limit int, 
 	panic("implement me")
 }
 
+func (u *UserRepository) GetUserByGoogleID(ctx context.Context, tx *gorm.DB, googleID string) (*models.User, error) {
+	user := &models.User{}
+	if err := tx.WithContext(ctx).Where("google_id = ?", googleID).First(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (u *UserRepository) UpdateUser(ctx context.Context, tx *gorm.DB, user *models.User) error {
-	err := tx.WithContext(ctx).
+	updates := map[string]interface{}{
+		"password":      user.Password,
+		"google_id":     user.GoogleID,
+		"auth_provider": user.AuthProvider,
+	}
+	return tx.WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", user.ID).
-		Updates(map[string]interface{}{
-			"password": user.Password,
-		}).Error
-
-	if err != nil {
-		return err
-	}
-	return nil
+		Updates(updates).Error
 }
 
 // Add authentication with transaction and return id

@@ -11,7 +11,7 @@ import {
   MessageMultiple01Icon,
   GlobalIcon,
   Tag01Icon,
-  Store04Icon, Trolley01Icon, Folder02Icon, Calendar02Icon,
+  Store04Icon, Trolley01Icon, Folder02Icon, Calendar02Icon, Tick02Icon,
 } from '@hugeicons/core-free-icons'
 import GroBasicInput from '@/components/forms/input/GroBasicInput.vue'
 import GroBasicButton from '@/components/buttons/GroBasicButton.vue'
@@ -152,7 +152,7 @@ async function logout() {
 
 
     <!-- Header -->
-    <div class="flex items-center justify-between px-8 pt-7">
+    <div class="flex items-center justify-between px-4 md:px-8 pt-7">
       <NuxtLink to="/">
         <img
           src="https://res.cloudinary.com/sdq121/image/upload/v1755371764/ltumpn6lhocowaxdi68p.png"
@@ -190,7 +190,7 @@ async function logout() {
               class="w-6 h-6 rounded-full flex items-center justify-center transition-all"
               :class="{
                 'bg-white border-2 border-[#EDEDEE]': isDotActive(dot),
-                'bg-white border-2 border-[#1E212B]': isDotComplete(dot),
+                'border-[#DBDBDD] bg-white border-2': isDotComplete(dot),
                 'bg-white border-2 border-[#DBDBDD]': !isDotActive(dot) && !isDotComplete(dot),
               }"
             >
@@ -202,9 +202,10 @@ async function logout() {
               >
                 <HugeiconsIcon
 
-                  :icon="CheckmarkCircle02Icon"
-                  color="#1E212B"
-                  class=" h-4 w-4 rounded-full transition-all"
+                  :icon="Tick02Icon"
+                  color="#134E64"
+                  stroke-width="3"
+                  class="h-4 w-4 rounded-full transition-all"
                 />
               </div>
               <div
@@ -228,12 +229,12 @@ async function logout() {
       <!-- ── SCREEN 1: Personal info ── -->
       <div
         v-if="screen === 1"
-        class="bg-white border border-[#EDEDEE] rounded-2xl py-10 px-8 w-full max-w-2xl"
+        class="bg-white border border-[#EDEDEE] rounded-2xl py-4 px-4 md:py-10 md:px-8 w-full max-w-2xl"
       >
-        <h2 class="text-2xl font-semibold text-black mb-1">
+        <h2 class="text-xl md:text-2xl font-semibold text-black mb-1">
           Welcome to Gro.com!
         </h2>
-        <p class="text-sm font-medium text-[#6F7177] mb-7">
+        <p class="text-sm font-medium text-[#6F7177] mb-5">
           We just need a little more info to get started.<br>You'll be able to edit this later
         </p>
 
@@ -248,7 +249,7 @@ async function logout() {
           </div>
           <GroBasicInput
             v-model="fullName"
-            placeholder="Text placeholder"
+            placeholder="Example Business"
             color="primary"
           />
         </div>
@@ -258,19 +259,19 @@ async function logout() {
             Business identifier
           </p>
           <div class="flex rounded-lg border border-[#EDEDEE] bg-[#F6F6F7] overflow-hidden focus-within:border-[#1E212B] transition-colors">
-            <span class="px-3 py-2.5 text-sm text-[#6F7177] border-r border-[#EDEDEE] bg-white shrink-0">
-              Usegro.com/
-            </span>
             <input
               v-model="businessName"
               placeholder="examplellc"
               class="flex-1 px-3 py-2.5 text-sm bg-[#F6F6F7] outline-none text-[#1E212B] placeholder-[#939499] focus:bg-white transition-colors"
               @keydown="(e) => e.key === ' ' && e.preventDefault()"
-              @input="(e) => { const el = e.target as HTMLInputElement; el.value = el.value.replace(/ /g, ''); businessName = el.value }"
+              @input="(e) => { const el = e.target as HTMLInputElement; el.value = el.value.replace(/ /g, '').toLowerCase(); businessName = el.value }"
             >
+            <span class="px-3 py-2.5 text-sm text-[#6F7177] border-r border-[#EDEDEE] bg-white shrink-0">
+              Usegro.com
+            </span>
           </div>
           <p class="text-xs text-[#939499] mt-1.5">
-            Your business name may be displayed to customers
+            Your business identifier may be displayed to customers
           </p>
         </div>
 
@@ -302,9 +303,9 @@ async function logout() {
       <!-- ── SCREEN 2: Business info ── -->
       <div
         v-else-if="screen === 2"
-        class="bg-white border border-[#EDEDEE] rounded-2xl py-10 px-8 w-full max-w-3xl"
+        class="bg-white border border-[#EDEDEE] rounded-2xl py-4 px-4 md:py-10 md:px-8 w-full max-w-3xl"
       >
-        <h2 class="text-2xl font-bold text-black mb-1">
+        <h2 class="text-xl md:text-2xl font-bold text-black mb-1">
           Which of these best describes you.
         </h2>
         <p class="text-sm text-[#6F7177] mb-7">
@@ -376,9 +377,9 @@ async function logout() {
       <!-- ── SCREEN 3: Sales channels — where to sell ── -->
       <div
         v-else-if="screen === 3"
-        class="bg-white border border-[#EDEDEE] rounded-2xl py-10 px-8 w-full max-w-3xl"
+        class="bg-white border border-[#EDEDEE] rounded-2xl py-4 px-4 md:py-10 md:px-8 w-full max-w-3xl"
       >
-        <h2 class="text-2xl font-bold text-black mb-1">
+        <h2 class="text-xl md:text-2xl font-bold text-black mb-1">
           Where would you like to sell?
         </h2>
         <p class="text-sm text-[#6F7177] mb-7">
@@ -474,9 +475,9 @@ async function logout() {
       <!-- ── SCREEN 4: Stock products — what to sell ── -->
       <div
         v-else-if="screen === 4"
-        class="bg-white border border-[#EDEDEE] rounded-2xl py-10 px-8 w-full max-w-3xl"
+        class="bg-white border border-[#EDEDEE] rounded-2xl py-4 px-4 md:py-10 md:px-8 w-full max-w-3xl"
       >
-        <h2 class="text-2xl font-bold text-black mb-1">
+        <h2 class="text-xl md:text-2xl font-bold text-black mb-1">
           What do you plan to sell first?
         </h2>
         <p class="text-sm text-[#6F7177] mb-7">

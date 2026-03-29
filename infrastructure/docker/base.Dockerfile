@@ -1,8 +1,10 @@
 FROM --platform=linux/amd64 golang:1.25-alpine AS builder
 WORKDIR /app
 COPY proto/ /proto/
+COPY services/shared/go.mod services/shared/go.sum /shared/
 COPY services/base/go.mod services/base/go.sum ./
 RUN go mod download
+COPY services/shared/ /shared/
 COPY services/base/ .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o base-service ./cmd
 

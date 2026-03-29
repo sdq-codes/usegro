@@ -14,6 +14,8 @@ on:
         options:
           - base
           - crm
+          - catalog
+          - billing
           - frontend
 
 env:
@@ -48,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: services/base/Dockerfile
+          file: infrastructure/docker/base.Dockerfile
           push: true
           tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT }}/base:production
           cache-from: type=gha,scope=base
@@ -103,6 +105,86 @@ jobs:
             --query 'service.serviceName' \
             --output text
 
+  deploy-catalog:
+    name: Deploy catalog
+    runs-on: ubuntu-latest
+    if: ${{ inputs.service == 'catalog' || inputs.service == '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push catalog image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infrastructure/docker/catalog.Dockerfile
+          push: true
+          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT }}/catalog:production
+          cache-from: type=gha,scope=catalog
+          cache-to: type=gha,scope=catalog,mode=max
+
+      - name: Force ECS redeploy (catalog)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service usegro-production-catalog \
+            --force-new-deployment \
+            --query 'service.serviceName' \
+            --output text
+
+  deploy-billing:
+    name: Deploy billing
+    runs-on: ubuntu-latest
+    if: ${{ inputs.service == 'billing' || inputs.service == '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push billing image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infrastructure/docker/billing.Dockerfile
+          push: true
+          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT }}/billing:production
+          cache-from: type=gha,scope=billing
+          cache-to: type=gha,scope=billing,mode=max
+
+      - name: Force ECS redeploy (billing)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service usegro-production-billing \
+            --force-new-deployment \
+            --query 'service.serviceName' \
+            --output text
+
   deploy-frontend:
     name: Deploy frontend
     runs-on: ubuntu-latest
@@ -132,7 +214,7 @@ jobs:
           push: true
           tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT }}/frontend:production
           build-args: |
-            NUXT_PUBLIC_API_BASE=http://usegro-production-alb-973426588.eu-west-1.elb.amazonaws.com/api/v1
+            NUXT_PUBLIC_API_BASE=http://usegro-production-alb-973426588.eu-central-1.elb.amazonaws.com/api/v1
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 

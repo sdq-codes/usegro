@@ -1,10 +1,11 @@
 import {
   AnalyticsUpIcon,
+  Archive01Icon,
   BankIcon, GlobalIcon,
   Home05Icon,
   Invoice01Icon,
   MagnetIcon, Settings01Icon,
-  Store01Icon, Store04Icon,
+  Store04Icon,
   User03Icon
 } from "@hugeicons/core-free-icons";
 
@@ -14,12 +15,19 @@ type IconSvgObject = ([string, {
   readonly [key: string]: string | number;
 }])[];
 
+export interface SidebarMenuChild {
+  title: string;
+  url: string;
+}
+
 export interface SidebarMenuItem {
   title: string;
+  shortTitle?: string;
   icon: IconSvgObject;
   url?: string;
   count: number | null;
   soon: boolean;
+  children?: SidebarMenuChild[];
 }
 
 export const SIDEBAR_MENU_SECTION_A: Array<SidebarMenuItem> = [
@@ -46,6 +54,7 @@ export const SIDEBAR_MENU_SECTION_A: Array<SidebarMenuItem> = [
   },
   {
     title: 'Leads Management',
+    shortTitle: 'Leads',
     url: 'dashboard',
     icon: MagnetIcon,
     count: null,
@@ -66,11 +75,14 @@ export const SIDEBAR_MENU_SECTION_A: Array<SidebarMenuItem> = [
     soon: false,
   },
   {
-    title: 'Product & Services',
-    url: 'dashboard',
-    icon: Store01Icon,
+    title: 'Catalog',
+    icon: Archive01Icon,
     count: null,
     soon: false,
+    children: [
+      { title: 'Products', url: 'catalog-products' },
+      { title: 'Services', url: 'catalog-services' },
+    ],
   }
 ]
 

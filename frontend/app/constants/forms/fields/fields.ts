@@ -34,28 +34,81 @@ export const CREATE_PHONE_FIELDS = (fieldCount: number) => {
   }
 }
 
-// Address Field Creator
+// Address Field Creator — returns a group of 5 fields
 export const CREATE_ADDRESS_FIELDS = (fieldCount: number) => {
-  return {
-    SK: `FORM#${crypto.randomUUID()}`,
-    fieldTypeID: 'address',
-    fieldTypeName: 'Long Text',
-    section: 'Extra fields',
-    slug: `address_${fieldCount}`,
-    label: `Address ${fieldCount}`,
-    description: 'Enter full address',
-    required: false,
-    order: fieldCount,
-    options: [],
-    configs: [],
-    validations: [
-      {
-        key: 'minLength',
-        rule: '10',
-        message: 'Address must be at least 10 characters'
-      }
-    ]
-  }
+  const base = fieldCount * 10
+  return [
+    {
+      SK: `FORM#${crypto.randomUUID()}`,
+      fieldTypeID: 'country',
+      fieldTypeName: 'Country',
+      section: 'Extra fields',
+      slug: `country_${fieldCount}`,
+      label: 'Country',
+      description: 'Select a country',
+      required: false,
+      order: base + 1,
+      options: [],
+      configs: [],
+      validations: []
+    },
+    {
+      SK: `FORM#${crypto.randomUUID()}`,
+      fieldTypeID: 'state',
+      fieldTypeName: 'State',
+      section: 'Extra fields',
+      slug: `state_province_${fieldCount}`,
+      label: 'State/Province',
+      description: '',
+      required: false,
+      order: base + 2,
+      options: [],
+      configs: [{ key: 'countrySlug', fieldSlug: `country_${fieldCount}` }],
+      validations: []
+    },
+    {
+      SK: `FORM#${crypto.randomUUID()}`,
+      fieldTypeID: 'street_address',
+      fieldTypeName: 'Short Text',
+      section: 'Extra fields',
+      slug: `street_address_${fieldCount}`,
+      label: 'Street Address',
+      description: '',
+      required: false,
+      order: base + 3,
+      options: [],
+      configs: [],
+      validations: []
+    },
+    {
+      SK: `FORM#${crypto.randomUUID()}`,
+      fieldTypeID: 'city',
+      fieldTypeName: 'City',
+      section: 'Extra fields',
+      slug: `city_${fieldCount}`,
+      label: 'City',
+      description: '',
+      required: false,
+      order: base + 4,
+      options: [],
+      configs: [],
+      validations: []
+    },
+    {
+      SK: `FORM#${crypto.randomUUID()}`,
+      fieldTypeID: 'zip',
+      fieldTypeName: 'Short Text',
+      section: 'Extra fields',
+      slug: `zip_postal_${fieldCount}`,
+      label: 'Zip/Postal Code',
+      description: '',
+      required: false,
+      order: base + 5,
+      options: [],
+      configs: [],
+      validations: []
+    },
+  ]
 }
 
 // Company Info Field Creator
@@ -119,8 +172,8 @@ export const CREATE_BIRTHDATE_FIELDS = (fieldCount: number) => {
     fieldTypeName: 'Date',
     section: 'Extra fields',
     slug: `birthdate_${fieldCount}`,
-    label: `Birthdate ${fieldCount}`,
-    description: 'Select date of birth',
+    label: `Date ${fieldCount}`,
+    description: 'Select a date',
     required: false,
     order: fieldCount,
     options: [],

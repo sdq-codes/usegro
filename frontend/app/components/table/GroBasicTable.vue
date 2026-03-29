@@ -14,7 +14,8 @@
 
       <!-- Filters Button -->
       <div
-        class="flex items-center py-2 px-3 text-[#1E212B] bg-white border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50 hover:border-gray-300 shadow-[inset_0_1px_0_0_#E3E3E3] transition-colors "
+        class="relative flex items-center gap-1.5 py-2 px-3 text-[#1E212B] bg-white border border-gray-200 rounded-lg text-sm cursor-pointer hover:bg-gray-50 hover:border-gray-300 shadow-[inset_0_1px_0_0_#E3E3E3] transition-colors"
+        @click="emit('filter-click')"
       >
         <HugeiconsIcon
           color="#1E212B"
@@ -22,6 +23,12 @@
           class="h-4"
         />
         <span class="font-semibold text-xs">Filters</span>
+        <span
+          v-if="props.activeFiltersCount && props.activeFiltersCount > 0"
+          class="flex items-center justify-center w-4 h-4 rounded-full bg-[#D26B06] text-white text-[10px] font-bold"
+        >
+          {{ props.activeFiltersCount }}
+        </span>
       </div>
     </div>
 
@@ -33,32 +40,10 @@
         :total-rows="total_rows"
         :is-server-mode="false"
         :page-size="params.pagesize"
-        :has-checkbox="true"
-        class="text-[#4B4D55]"
-      >
-        <template #actions="data">
-          <div class="flex gap-4">
-            <GroBasicButton
-              color="primary"
-              size="xs"
-              shape="custom"
-              class="w-max"
-              @click="() => props.onView?.(data.value)"
-            >
-              View
-            </GroBasicButton>
-            <GroBasicButton
-              color="tertiary"
-              size="xs"
-              shape="custom"
-              class="w-max"
-              @click="() => props.onDelete?.(data.value)"
-            >
-              Delete
-            </GroBasicButton>
-          </div>
-        </template>
-      </vue3-datatable>
+        :has-checkbox="false"
+        class="text-[#4B4D55] cursor-pointer"
+        @row-click="(row) => props.onView?.(row)"
+      />
     </div>
   </div>
 </template>
@@ -71,12 +56,15 @@ import { HugeiconsIcon } from '@hugeicons/vue'
 import { FilterIcon } from '@hugeicons/core-free-icons'
 import GroBasicSearch from "@/components/forms/input/GroBasicSearch.vue";
 import { type ColsDefinition } from '@/composables/helpers/types/table'
-import GroBasicButton from "@/components/buttons/GroBasicButton.vue";
 
 const currentPage =  ref<number>(0);
 const pageSize =  ref<number>(10);
 
 const search = defineModel<string>();
+
+const emit = defineEmits<{
+  (e: 'filter-click'): void
+}>()
 
 const params = computed(() =>{
   return {
@@ -93,11 +81,11 @@ const props = defineProps<{
   cols: ColsDefinition[]
   rows: [],
   onView?: (row) => void;
-  onDelete?: (row) => void;
+  activeFiltersCount?: number;
 }>();
 </script>
 
-<style >
+<style>
 thead {
   background-color: #F6F6F7 !important;
   color: #1E212B !important;
@@ -105,6 +93,21 @@ thead {
 
 tbody {
   background-color: #FFFFFF !important;
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+  background-color: #F6F6F7 !important;
+}
+
+tbody tr:active {
+  background-color: #EDEDEE !important;
+  transform: scale(0.995);
+  transition: background-color 0.05s ease, transform 0.05s ease;
 }
 
 .bh-pagination {

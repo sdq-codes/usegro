@@ -12,6 +12,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-usegro}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-usegro_secret}
       POSTGRES_DB: ${POSTGRES_DB:-usegro}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -36,13 +38,18 @@ services:
     networks:
       - usegro_network
 
-  dynamodb-local:
-    image: amazon/dynamodb-local:latest
-    container_name: usegro_dynamodb
-    user: root
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+  mongodb:
+    image: mongo:7
+    container_name: usegro_mongodb
+    ports:
+      - "27017:27017"
     volumes:
-      - dynamodb_data:/home/dynamodblocal/data
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - usegro_network
 
@@ -62,6 +69,7 @@ services:
     depends_on:
       - base
       - crm
+      - billing
       - whatsapp-gateway
       - frontend
 
@@ -74,10 +82,11 @@ services:
     env_file: .env
     volumes:
       - ./services/base:/app
+      - ./services/shared:/shared
       - ./proto:/proto
       - base_mod_cache:/root/go/pkg/mod
     expose:
-      - "8080"
+      - "8090"
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,6 +111,7 @@ services:
     env_file: .env
     volumes:
       - ./services/crm:/app
+      - ./services/shared:/shared
       - ./proto:/proto
       - crm_mod_cache:/root/go/pkg/mod
     expose:
@@ -122,6 +132,36 @@ services:
       - "traefik.http.routers.crm.middlewares=cors@file"
       - "traefik.http.services.crm.loadbalancer.server.port=8090"
 
+  # ─── Catalog Service (/api/v1/catalog/*) ───────────────────
+  catalog:
+    build:
+      context: .
+      dockerfile: services/catalog/Dockerfile
+    container_name: usegro_catalog
+    env_file: .env
+    volumes:
+      - ./services/catalog:/app
+      - ./services/shared:/shared
+      - ./proto:/proto
+      - catalog_mod_cache:/root/go/pkg/mod
+    expose:
+      - "8090"
+      - "50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - usegro_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.catalog.rule=PathPrefix(`/api/v1/catalog`)"
+      - "traefik.http.routers.catalog.priority=40"
+      - "traefik.http.routers.catalog.entrypoints=web"
+      - "traefik.http.routers.catalog.middlewares=cors@file"
+      - "traefik.http.services.catalog.loadbalancer.server.port=8090"
+
   # ─── Internal gRPC Services ─────────────────────────────────
   # Not exposed via Traefik — called by CRM over the internal Docker network
   messaging:
@@ -137,24 +177,38 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      dynamodb-local:
-        condition: service_started
+      mongodb:
+        condition: service_healthy
     networks:
       - usegro_network
 
   billing:
     build:
       context: .
-      dockerfile: infrastructure/docker/billing.Dockerfile
+      dockerfile: services/billing/Dockerfile
     container_name: usegro_billing
-    expose:
-      - "50053"
     env_file: .env
+    volumes:
+      - ./services/billing:/app
+      - ./services/shared:/shared
+      - ./proto:/proto
+      - billing_mod_cache:/root/go/pkg/mod
+    expose:
+      - "8090"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - usegro_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.billing.rule=PathPrefix(`/api/v1/billing`)"
+      - "traefik.http.routers.billing.priority=45"
+      - "traefik.http.routers.billing.entrypoints=web"
+      - "traefik.http.routers.billing.middlewares=cors@file"
+      - "traefik.http.services.billing.loadbalancer.server.port=8090"
 
   analytics:
     build:
@@ -167,8 +221,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      dynamodb-local:
-        condition: service_started
+      mongodb:
+        condition: service_healthy
     networks:
       - usegro_network
 
@@ -217,6 +271,8 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  dynamodb_data:
+  mongodb_data:
   base_mod_cache:
   crm_mod_cache:
+  catalog_mod_cache:
+  billing_mod_cache:

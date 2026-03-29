@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, defineModel } from 'vue'
+import { defineProps, defineModel, computed } from 'vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { CheckmarkSquare01Icon, CancelSquareIcon, AlertSquareIcon } from '@hugeicons/core-free-icons'
 
@@ -62,19 +62,20 @@ const hintClass = computed(() => {
             :class="[borderClass]"
           >
             <div class="flex items-center gap-x-2 cursor-pointer">
+              <input
+                v-model="model"
+                type="radio"
+                :name="props.name"
+                :value="opt.value"
+                class="hidden peer"
+                :disabled="props.disabled"
+              >
               <div
                 class="h-5 w-5 rounded-full border-2 border-[#DBDBDD] flex items-center justify-center"
               >
-                <input
-                  v-model="model"
-                  type="radio"
-                  :name="props.name"
-                  :value="opt.value"
-                  class="hidden peer"
-                  :disabled="props.disabled"
-                >
                 <span
-                  class="h-3 w-3 rounded-full peer-checked:bg-[#1E212B]"
+                  class="h-3 w-3 rounded-full transition-colors duration-150"
+                  :class="model === opt.value ? 'bg-[#2176AE]' : ''"
                 />
               </div>
               <div class="gap-y-3">

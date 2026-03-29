@@ -2,8 +2,10 @@ package verification
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sdq-codes/usegro-api/internal/apps/base/dto"
+	"github.com/sdq-codes/usegro-api/internal/apps/base/models"
 	"github.com/sdq-codes/usegro-api/internal/apps/base/services/verification"
 	"github.com/sdq-codes/usegro-api/internal/apps/base/validation"
 	"github.com/sdq-codes/usegro-api/internal/helper/auth"
@@ -24,21 +26,9 @@ func NewEmailVerificationController(db *gorm.DB, rdb *redis.Client) *Controller 
 	}
 }
 
-// Verify godoc
-// @Summary      Verify email address
-// @Description  Verifies a user's email address using the 6-digit code sent to their inbox
-// @Tags         Verification
-// @Accept       json
-// @Produce      json
-// @Param        Authorization  header    string                    true  "Bearer access token"
-// @Param        payload        body      dto.EmailVerificationDTI  true  "Verification code"
-// @Success      201  {object}  response.CommonResponse
-// @Failure      400  {object}  response.CommonResponse
-// @Failure      401  {object}  response.CommonResponse
-// @Router       /api/v1/verification/email [post]
 func (uc *Controller) Verify(c *fiber.Ctx) error {
 	var req dto.EmailVerificationDTI
-	authUser, err := auth.AuthUser(c)
+	claims, err := auth.AuthUser(c)
 	if err != nil {
 		return exception.UnauthorizedError
 	}
@@ -52,8 +42,13 @@ func (uc *Controller) Verify(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = uc.emailService.EmailVerification(c.Context(), req.TokenHash, &authUser.User)
+	userID, err := uuid.Parse(claims.UserID)
 	if err != nil {
+		return exception.UnauthorizedError
+	}
+	user := &models.User{ID: userID, Email: claims.Email}
+
+	if err = uc.emailService.EmailVerification(c.Context(), req.TokenHash, user); err != nil {
 		return err
 	}
 
@@ -61,29 +56,26 @@ func (uc *Controller) Verify(c *fiber.Ctx) error {
 		ResponseCode:    response.RESOURCE_CREATED,
 		ResponseMessage: "User email successfully verified",
 		Data: dto.RegisteredUserDTO{
-			ID:    authUser.User.ID,
-			Email: authUser.User.Email,
+			ID:    user.ID,
+			Email: user.Email,
 		},
 	})
 }
 
-// Resend godoc
-// @Summary      Resend verification email
-// @Description  Sends a new verification code to the authenticated user's email address
-// @Tags         Verification
-// @Produce      json
-// @Param        Authorization  header  string  true  "Bearer access token"
-// @Success      200  {object}  response.CommonResponse
-// @Failure      401  {object}  response.CommonResponse
-// @Router       /api/v1/verification/email/resend [get]
 func (uc *Controller) Resend(c *fiber.Ctx) error {
 	ctx := c.Context()
-	authUser, err := auth.AuthUser(c)
+	claims, err := auth.AuthUser(c)
 	if err != nil {
 		return exception.UnauthorizedError
 	}
 
-	if err := uc.verificationService.ResendVerificationToken(ctx, &authUser.User); err != nil {
+	userID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		return exception.UnauthorizedError
+	}
+	user := &models.User{ID: userID, Email: claims.Email}
+
+	if err := uc.verificationService.ResendVerificationToken(ctx, user); err != nil {
 		return err
 	}
 
@@ -91,8 +83,8 @@ func (uc *Controller) Resend(c *fiber.Ctx) error {
 		ResponseCode:    response.RESOURCE_FETCHED,
 		ResponseMessage: "Verification email resent successfully",
 		Data: dto.RegisteredUserDTO{
-			ID:    authUser.User.ID,
-			Email: authUser.User.Email,
+			ID:    user.ID,
+			Email: user.Email,
 		},
 	})
 }

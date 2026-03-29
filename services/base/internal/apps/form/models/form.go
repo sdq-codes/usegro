@@ -3,24 +3,22 @@ package models
 import "time"
 
 type Form struct {
-	PK        string    `dynamodbav:"PK"`
-	SK        string    `dynamodbav:"SK"`
-	CrmID     string    `json:"crmID" dynamodbav:"crmID"`
-	Type      string    `json:"type" dynamodbav:"type"`
-	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" dynamodbav:"updatedAt"`
+	ID        string    `bson:"_id" json:"id"`
+	CrmID     string    `bson:"crmID" json:"crmID"`
+	Type      string    `bson:"type" json:"type"`
+	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
 }
 
 type FormVersion struct {
-	PK                string    `dynamodbav:"PK"`
-	SK                string    `dynamodbav:"SK"`
-	FormID            string    `json:"formID" dynamodbav:"formID"`
-	Title             string    `json:"title" dynamodbav:"title"`
-	Description       string    `json:"description" dynamodbav:"description"`
-	FormVersionStatus string    `json:"formVersionStatus" dynamodbav:"formVersionStatus"` //archived, published, draft
-	PublishedAt       string    `json:"publishedAt" dynamodbav:"publishedAt"`
-	CreatedAt         time.Time `json:"createdAt" dynamodbav:"createdAt"`
-	UpdatedAt         time.Time `json:"updatedAt" dynamodbav:"updatedAt"`
+	ID                string    `bson:"_id" json:"id"`
+	FormID            string    `bson:"formID" json:"formID"`
+	Title             string    `bson:"title" json:"title"`
+	Description       string    `bson:"description" json:"description"`
+	FormVersionStatus string    `bson:"formVersionStatus" json:"formVersionStatus"`
+	PublishedAt       string    `bson:"publishedAt" json:"publishedAt"`
+	CreatedAt         time.Time `bson:"createdAt" json:"createdAt"`
+	UpdatedAt         time.Time `bson:"updatedAt" json:"updatedAt"`
 }
 
 type CompleteForm struct {

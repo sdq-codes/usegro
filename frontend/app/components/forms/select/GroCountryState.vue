@@ -19,14 +19,16 @@
  *  - update:countryValue
  */
 
-import { defineProps, defineEmits, ref, watch, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { CheckmarkSquare01Icon, AlertSquareIcon, CancelSquareIcon } from '@hugeicons/core-free-icons'
-import {STATES} from "@/constants/states";
+import { STATES } from "@/constants/states"
+import { COUNTRY_ISO_TO_STATE_ID } from "@/constants/countryStateMapping"
 
-const options: string[] = STATES.map(state => state.label)
+// All state labels (fallback when no country selected)
+const allOptions: string[] = STATES.map(state => state.label)
 
 const props = defineProps<{
   modelValue?: string | null
@@ -42,12 +44,21 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue', 'update:countryValue'])
 
-// Internal reactive states
-const internalText = ref<string>(props.modelValue ?? '')
-const country = defineModel<string>('')
+const country = defineModel<string>()
 
-// sync internal -> external
-watch(internalText, v => emit('update:modelValue', v))
+// Filter states to only those matching the selected country ISO code
+const options = computed<string[]>(() => {
+  const iso = props.countryValue as string | null | undefined
+  if (!iso) return allOptions
+  const countryId = COUNTRY_ISO_TO_STATE_ID[iso]
+  if (!countryId) return allOptions
+  return STATES.filter(s => s.countryId === countryId).map(s => s.label)
+})
+
+// Reset state when country changes
+watch(() => props.countryValue, () => {
+  country.value = undefined
+})
 
 // color classes (keeps visual style from your input component)
 const colorClasses: Record<string, string> = {

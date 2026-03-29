@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sdq-codes/usegro-api/config"
 	"github.com/sdq-codes/usegro-api/database"
-	"github.com/sdq-codes/usegro-api/database/dynamo"
+	"github.com/sdq-codes/usegro-api/database/mongodb"
 	httpMiscellaneous "github.com/sdq-codes/usegro-api/internal/apps/base/controllers/miscellaneous"
 	workers "github.com/sdq-codes/usegro-api/internal/apps/base/controllers/queue"
 	"github.com/sdq-codes/usegro-api/internal/apps/base/routes"
@@ -25,12 +25,12 @@ func RegisterRoute(r *fiber.App) {
 	}
 	rdb := database.SingleRdb
 
-	dynamoCfg := config.GetConfig().DynamodbForms
-	err = dynamo.InitDynamoFormClient(dynamoCfg.DynamoEndpoint, dynamoCfg.AwsRegion)
+	mongoCfg := config.GetConfig().MongoDB
+	err = mongodb.InitMongoClient(mongoCfg.URI, mongoCfg.Database)
 	if err != nil {
 		return
 	}
-	dynamodbForms := dynamo.DynamoClient
+	mongoDB := mongodb.GetMongoDatabase()
 
 	api := r.Group("/api")
 	v1 := api.Group("/v1")
@@ -39,7 +39,7 @@ func RegisterRoute(r *fiber.App) {
 	// Health API
 	routes.Health(r)
 	routes.BaseRouter(base, db, rdb)
-	formRouter.FormsRouter(base, db, dynamodbForms)
+	formRouter.FormsRouter(base, db, mongoDB)
 
 	// Error Case Handler
 	miscellaneousHandler := httpMiscellaneous.NewMiscellaneousHTTPHandler()

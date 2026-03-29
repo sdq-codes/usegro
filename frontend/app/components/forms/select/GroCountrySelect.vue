@@ -6,7 +6,8 @@ import { HugeiconsIcon } from '@hugeicons/vue'
 import { CheckmarkSquare01Icon, AlertSquareIcon, CancelSquareIcon } from '@hugeicons/core-free-icons'
 import { COUNTRIES } from "@/constants/countries"
 
-const options: string[] = COUNTRIES.map(country => country.label)
+type CountryOption = { label: string; value: string }
+const options: CountryOption[] = COUNTRIES.map(country => ({ label: country.label, value: country.value }))
 
 const props = defineProps<{
   placeholder?: string
@@ -17,7 +18,14 @@ const props = defineProps<{
   readonly?: boolean
 }>()
 
+// modelValue stores the ISO code (e.g. "NG")
 const modelValue = defineModel<string>()
+
+// Multiselect works with the full object internally
+const selectedOption = computed({
+  get: () => options.find(o => o.value === modelValue.value) ?? null,
+  set: (opt: CountryOption | null) => { modelValue.value = opt?.value ?? undefined },
+})
 
 const colorClasses: Record<string, string> = {
   primary: 'border-[#EDEDEE] hover:border-[#94BDD8] focus-within:border-[#1E212B] text-[#4F5435] placeholder-[#939499]',
@@ -58,12 +66,14 @@ const selectClass = computed(() => {
     <!-- country select -->
     <div :class="['flex items-center gap-3']">
       <Multiselect
-        v-model="modelValue"
+        v-model="selectedOption"
         :options="options"
+        track-by="value"
+        label="label"
         :placeholder="props.placeholder || 'Select a country'"
         :show-labels="false"
         :searchable="true"
-        :close-on-selsfsect="true"
+        :close-on-select="true"
         :clear-on-select="false"
         :preserve-search="true"
         :class="selectClass"

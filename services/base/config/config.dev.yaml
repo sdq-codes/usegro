@@ -27,12 +27,10 @@ postgres:
   password: "" # set via POSTGRES_PASSWORD env var
   sslMode: "disable"
 
-dynamodbForms:
-  awsRegion: "eu-west-1"
-#  dynamoEndpoint: "http://localhost:8000"
-  dynamoEndpoint: "http://usegro_dynamodb:8000"
-  dynamoTable: "crm_forms"
-  dynamoFormTableName: "forms"
+mongodb:
+#  uri: "mongodb://localhost:27017"   # use this when running locally outside Docker
+  uri: "mongodb://usegro_mongodb:27017"
+  database: "usegro"
 
 redis:
   - host: "redis"
@@ -43,11 +41,12 @@ redis:
 
 auth:
   apiSecret: "" # set via AUTH_API_SECRET env var
-  tokenExpiryMinutes: 30
-  refreshTokenExpiryDays: 7
+  tokenExpiryMinutes: 15
+  refreshTokenExpiryDays: 2
+  maxSessionDays: 30
 
 ses:
-  region: "eu-west-1"
+  region: "eu-central-1"
   fromEmail: "" # set via SES_FROM_EMAIL env var
 
 frontEnd:
@@ -56,7 +55,7 @@ frontEnd:
 google:
   clientId: ""     # set via GOOGLE_CLIENT_ID env var
   clientSecret: "" # set via GOOGLE_CLIENT_SECRET env var
-  redirectUrl: "http://localhost:8090/api/v1/authentication/google/callback"
+  redirectUrl: "http://localhost/api/v1/base/authentication/google/callback"
 
 facebook:
   appId: ""        # set via FACEBOOK_APP_ID env var

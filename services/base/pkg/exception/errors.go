@@ -139,6 +139,20 @@ var (
 		SUBCODE_USER_EMAIL_ALREADY_TAKEN,
 		"User email verification failed",
 	)
+	// Returned when a Google-registered user tries to log in with password
+	GoogleUserTriedPasswordLoginError *ExceptionErrors = createFixedExceptionErrors(
+		http.StatusUnprocessableEntity,
+		ERROR_TYPE_VALIDATION_ERROR,
+		SUBCODE_USER_EMAIL_ALREADY_TAKEN,
+		"Account can only use Google to login",
+	)
+	// Returned when a password-registered user tries to log in with Google
+	PasswordUserTriedGoogleLoginError *ExceptionErrors = createFixedExceptionErrors(
+		http.StatusUnprocessableEntity,
+		ERROR_TYPE_VALIDATION_ERROR,
+		SUBCODE_USER_EMAIL_ALREADY_TAKEN,
+		"Account can only use password login",
+	)
 
 	// JobError
 	BackgroundJobFailedError *ExceptionErrors = createFixedExceptionErrors(

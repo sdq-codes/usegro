@@ -57,31 +57,27 @@ export const useAuthentication = () => {
 
   const Logout = async (): Promise<ApiResult<unknown, RawAxiosResponseHeaders | (RawAxiosResponseHeaders & AxiosHeaders)>> => {
     try {
-      const response = await api.post("/base/authentication/logout", {
-        refresh_token: localStorage.getItem("refresh_token"),
-      })
+      // No body — the HttpOnly cookie is sent automatically and cleared by the server
+      const response = await api.post("/base/authentication/logout")
       return { success: true, data: response.data, headers: response.headers }
     } catch (error: unknown) {
       return { success: false, error: error.response?.data?.response_message || "Logout failed" }
     } finally {
       setAccessToken(null)
-      localStorage.removeItem("refresh_token")
+      localStorage.removeItem("session")
     }
   }
 
   const RefreshToken = async (): Promise<boolean> => {
-    const refreshToken = localStorage.getItem("refresh_token")
-    if (!refreshToken) return false
+    // No body — the HttpOnly cookie is sent automatically
+    if (!localStorage.getItem('session')) return false
 
     try {
-      const { data } = await api.post("/base/authentication/refresh", {
-        refresh_token: refreshToken,
-      })
+      const { data } = await api.post("/base/authentication/refresh")
       setAccessToken(data.data.access_token)
-      localStorage.setItem("refresh_token", data.data.refresh_token)
       return true
     } catch {
-      localStorage.removeItem("refresh_token")
+      localStorage.removeItem("session")
       return false
     }
   }

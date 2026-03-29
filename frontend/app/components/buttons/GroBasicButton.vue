@@ -19,8 +19,8 @@ const props = defineProps<{
 // Classes for colors
 const colorClasses: Record<string, string> = {
   primary: 'bg-[#1E212B] cursor-pointer text-white hover:bg-[#6F7177] font-semibold active:bg-[#4B4D55] disabled:bg-[#B7B8BB] disabled:cursor-not-allowed',
-  secondary: 'bg-[#DBDBDD] cursor-pointer text-[#1E212B] hover:bg-[#DBDBDD] hover:text-[#6F7177] active:bg-[#B7B8BB] active:text-[#4B4D55] disabled:bg-[#EDEDEE] disabled:text-[#B7B8BB] disabled:cursor-not-allowed font-semibold',
-  tertiary: 'border border-[#DBDBDD] cursor-pointer font-semibold text-[#1E212B] hover:border-[#DBDBDD] hover:bg-[#DBDBDD] active:bg-[#DBDBDD] disabled:bg-[#F6F6F7] disabled:border-0 disabled:text-[#B7B8BB] disabled:cursor-not-allowed',
+  secondary: 'bg-[#EDEDEE] cursor-pointer text-[#1E212B] hover:bg-[#EDEDEE] hover:text-[#6F7177] active:bg-[#B7B8BB] active:text-[#4B4D55] disabled:bg-[#EDEDEE] disabled:text-[#B7B8BB] disabled:cursor-not-allowed font-semibold',
+  tertiary: 'border border-[#EDEDEE] cursor-pointer font-semibold text-[#1E212B] hover:border-[#DBDBDD] hover:bg-[#DBDBDD] active:bg-[#DBDBDD] disabled:bg-[#F6F6F7] disabled:border-0 disabled:text-[#B7B8BB] disabled:cursor-not-allowed',
   custom: '' // handled inline
 }
 
@@ -42,7 +42,7 @@ const shapeClasses: Record<string, string> = {
 // Computed class list
 const btnClass = computed(() => {
   return [
-    'inline-flex items-center gap-1 transition-colors duration-200 px-4 py-2',
+    'inline-flex items-center gap-1 transition-all duration-150 px-4 py-2 active:scale-95 active:shadow-none',
     colorClasses[props.color || 'primary'],
     sizeClasses[props.size || 'md'],
     shapeClasses[props.shape || 'custom'],

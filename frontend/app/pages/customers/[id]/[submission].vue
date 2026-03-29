@@ -1,18 +1,45 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, onBeforeUnmount} from 'vue'
 import MainDashboard from "@/components/dashboard/main-dashboard.vue";
 import {useCustomerAPI} from "@/composables/api/customer/customer";
+
+interface CustomerActivity {
+  id: string
+  activityType: string
+  description: string
+  createdAt: string
+}
+import {useFormAPI} from "@/composables/api/customer/forms/create";
 import {useRoute} from "nuxt/app";
 import GroBasicButton from "@/components/buttons/GroBasicButton.vue";
-import {Copy01Icon, InformationCircleIcon, LessThanIcon} from "@hugeicons/core-free-icons";
+import {CallIcon, Copy01Icon, GreaterThanIcon, Mail01Icon} from "@hugeicons/core-free-icons";
 import {HugeiconsIcon} from "@hugeicons/vue";
+import BackLink from "@/components/navigation/BackLink.vue";
 import {notify} from "@/composables/helpers/notification/notification";
 import GroReadOnlyTags from "@/components/tags/GroReadOnlyTags.vue";
+import GroBasicTagSelect from "@/components/forms/select/GroBasicTagSelect.vue";
+import CreateCustomerModal from "@/components/modals/modal/create-customer-modal.vue"
+import CommentEditor from "@/components/editor/CommentEditor.vue";
 
 const customerProfile = ref()
+const rawSubmission = ref()
+const extraFields = ref<{ label: string; slug: string; value: unknown }[]>([])
 
 const comment = ref('')
-const showLabelsEdit = ref(false)
+const showTagsEdit = ref(false)
+const showEditModal = ref(false)
+const showInfoMenu = ref(false)
+
+const closeInfoMenu = (e: MouseEvent) => {
+  if (!(e.target as Element).closest('.info-menu-container')) {
+    showInfoMenu.value = false
+  }
+}
+onMounted(() => document.addEventListener('click', closeInfoMenu))
+onBeforeUnmount(() => document.removeEventListener('click', closeInfoMenu))
+const editTagIds = ref<string[]>([])
+const isSavingTags = ref(false)
+const activities = ref<CustomerActivity[]>([])
 
 const route = useRoute()
 
@@ -26,14 +53,58 @@ const fetchCustomer = async () => {
     return;
   }
 
-  customerProfile.value = {
-      ...createdCustomer.data?.data?.Answers,
-      customerId: createdCustomer.data?.data?.SubmissionID,
-      createdAt: createdCustomer.data?.data?.CreatedAt,
-      formId: createdCustomer.data?.data?.PK?.split("#")[1].trim(),
-    };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const submission = (createdCustomer.data as any)?.data
+  rawSubmission.value = submission
 
-  console.log(customerProfile.value);
+  const answers = submission?.answers ?? {}
+
+  customerProfile.value = {
+    ...answers,
+    customerId: submission?._id,
+    createdAt: submission?.createdAt,
+    formId: submission?.formID,
+  }
+
+  editTagIds.value = [...(answers?.customer_tags ?? [])]
+
+  const activityResponse = await useCustomerAPI().FetchCustomerActivity(submission?._id)
+  if (activityResponse.success) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    activities.value = ((activityResponse as any).data?.data ?? []) as CustomerActivity[]
+  }
+
+  // Parse versionSnap extra fields — each field is an array of {Key, Value} pairs
+  const versionSnap: Array<Array<{ Key: string; Value: unknown }>> = submission?.versionSnap ?? []
+  extraFields.value = versionSnap
+    .map(fieldPairs => Object.fromEntries(fieldPairs.map(({ Key, Value }) => [Key, Value])))
+    .filter(f => f.section === 'Extra fields' && answers[f.slug as string] !== undefined && answers[f.slug as string] !== '')
+    .map(f => ({ label: f.label as string || f.slug as string, slug: f.slug as string, value: answers[f.slug as string] }))
+}
+
+const saveTagsUpdate = async () => {
+  if (!rawSubmission.value) return
+  isSavingTags.value = true
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { customerId: _cid, createdAt: _ca, formId: _fid, ...answerFields } = customerProfile.value
+    const updatedAnswers = { ...answerFields, customer_tags: editTagIds.value }
+
+    const result = await useFormAPI().UpdateSubmission(
+      rawSubmission.value.formID,
+      rawSubmission.value._id,
+      updatedAnswers
+    )
+    if (result.success) {
+      customerProfile.value.customer_tags = editTagIds.value
+      notify("Tags updated successfully", "success")
+      showTagsEdit.value = false
+    } else {
+      notify("Failed to update tags", "error")
+    }
+  } finally {
+    isSavingTags.value = false
+  }
 }
 
 function formatCustomerDuration(timestamp: string): string {
@@ -59,15 +130,17 @@ function formatCustomerDuration(timestamp: string): string {
 }
 
 const handleWhatsapp = () => {
-  window.open(`https://wa.me/${customer.value.phone.replace(/\D/g, '')}`, '_blank')
+  console.log(customerProfile.value)
+  window.open(`https://wa.me/${customerProfile.value.phone_number.replace(/\D/g, '')}`, '_blank')
 }
 
 const handleCall = () => {
-  window.location.href = `tel:${customer.value.phone}`
+  window.location.href = `tel:${customerProfile.value.phone_number}`
 }
 
 const handleEmail = () => {
-  window.location.href = `mailto:${customer.value.email}`
+  console.log(customerProfile.value.email)
+  window.location.href = `mailto:${customerProfile.value.email}`
 }
 
 const copyToClipboard = (text: string, field: string) => {
@@ -75,9 +148,25 @@ const copyToClipboard = (text: string, field: string) => {
   notify(`${field} copied successfully`, "success");
 }
 
-const postComment = () => {
-  if (comment.value.trim()) {
-    comment.value = ''
+const isPostingComment = ref(false)
+
+const postComment = async () => {
+  if (!comment.value.trim() || !rawSubmission.value) return
+  isPostingComment.value = true
+  try {
+    const result = await useCustomerAPI().PostComment(rawSubmission.value._id, comment.value.trim())
+    if (result.success) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newActivity = (result as any).data?.data as CustomerActivity
+      if (newActivity) {
+        activities.value = [newActivity, ...activities.value]
+      }
+      comment.value = ''
+    } else {
+      notify("Failed to post comment", "error")
+    }
+  } finally {
+    isPostingComment.value = false
   }
 }
 </script>
@@ -91,34 +180,24 @@ const postComment = () => {
           <div class="max-w-7xl mx-auto">
             <div class="flex flex-wrap gap-4">
               <div class="">
-                <div class="flex mb-3">
-                  <HugeiconsIcon
-                    :icon="LessThanIcon"
-                    size="13"
-                    class="my-auto mr-1"
-                    color="currentColor"
-                  />
-                  <NuxtLink
-                    to="/customers"
-                    class="text-[#2176AE] text-sm font-medium inline-flex items-center border-b border-[#2176AE]"
-                  >
-                    Customers
-                  </NuxtLink>
-                </div>
+                <BackLink
+                  to="/customers"
+                  label="Customers"
+                />
                 <h1
                   v-if="customerProfile"
-                  class="text-2xl sm:text-3xl font-bold text-[#1E212B]"
+                  class="text-xl sm:text-3xl font-bold text-[#1E212B]"
                 >
                   {{ customerProfile?.customer_type === 'Business'
                     ? customerProfile?.company_name
                     : `${customerProfile?.first_name} ${customerProfile?.last_name}` }}
                 </h1>
-                <div class="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-600">
+                <div class="flex flex-wrap items-center gap-2 mt-1 mb-4 text-sm text-gray-600">
                   <span>{{ customerProfile?.email
                     ? customerProfile?.email
                     : customerProfile?.address }}</span>
                   <span class="hidden sm:inline">•</span>
-                  <span class="text-[#6F7177]">Customer for {{ formatCustomerDuration(customerProfile?.createdAt) }}</span>
+                  <span class="text-[#6F7177] text-xs">Customer for {{ formatCustomerDuration(customerProfile?.createdAt) }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-2 ml-auto">
@@ -151,7 +230,8 @@ const postComment = () => {
               <div class="bg-white rounded-lg shadow-sm p-6">
                 <div class="flex justify-around gap-4">
                   <button
-                    class="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
+                    v-if="customerProfile?.phone_number"
+                    class="flex flex-col cursor-pointer items-center gap-2 hover:opacity-80 transition-opacity"
                     @click="handleWhatsapp"
                   >
                     <div class="w-12 h-12 rounded-2xl flex items-center justify-center contact-box">
@@ -166,44 +246,34 @@ const postComment = () => {
                     <span class="text-xs font-medium text-[#1E212B]">Whatsapp</span>
                   </button>
                   <button
-                    class="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity "
+                    v-if="customerProfile?.phone_number"
+                    class="flex flex-col items-center cursor-pointer gap-2 hover:opacity-80 transition-opacity "
                     @click="handleCall"
                   >
                     <div class="w-12 h-12 rounded-full flex items-center justify-center contact-box">
-                      <svg
-                        class="w-6 h-6 text-gray-700"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          :stroke-width="2"
-                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                        />
-                      </svg>
+                      <HugeiconsIcon
+                        :icon="CallIcon"
+                        class="my-auto"
+                        :size="16"
+                        fill="#1E212B"
+                        :stroke-width="3"
+                      />
                     </div>
                     <span class="text-xs font-medium text-[#1E212B]">Call</span>
                   </button>
                   <button
-                    class="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity "
+                    v-if="customerProfile?.email"
+                    class="flex flex-col items-center cursor-pointer gap-2 hover:opacity-80 transition-opacity "
                     @click="handleEmail"
                   >
                     <div class="w-12 h-12 rounded-full  flex items-center justify-center contact-box">
-                      <svg
-                        class="w-6 h-6 text-gray-700"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          :stroke-width="2"
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <HugeiconsIcon
+                        :icon="Mail01Icon"
+                        class="my-auto"
+                        :size="16"
+                        color="#1E212B"
+                        :stroke-width="3"
+                      />
                     </div>
                     <span class="text-xs font-medium text-[#1E212B]">Send an Email</span>
                   </button>
@@ -219,24 +289,51 @@ const postComment = () => {
                   <h2 class="text-lg font-bold text-[#1E212B]">
                     Customer information
                   </h2>
-                  <button class="p-1 hover:bg-gray-100 rounded transition-colors">
-                    <svg
-                      class="w-5 h-5 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div class="relative info-menu-container">
+                    <button
+                      class="p-1 hover:bg-gray-100 rounded transition-colors"
+                      @click.stop="showInfoMenu = !showInfoMenu"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        :stroke-width="2"
-                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        class="w-5 h-5 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          :stroke-width="2"
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+                    <Transition
+                      enter-active-class="transition ease-out duration-150"
+                      enter-from-class="opacity-0 scale-95"
+                      enter-to-class="opacity-100 scale-100"
+                      leave-active-class="transition ease-in duration-100"
+                      leave-from-class="opacity-100 scale-100"
+                      leave-to-class="opacity-0 scale-95"
+                    >
+                      <ul
+                        v-show="showInfoMenu"
+                        class="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-xl p-1 z-50 origin-top-right"
+                      >
+                        <li>
+                          <button
+                            class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
+                            @click="showEditModal = true; showInfoMenu = false"
+                          >
+                            Edit
+                          </button>
+                        </li>
+                      </ul>
+                    </Transition>
+                  </div>
                 </div>
 
-                <div class="space-y-3">
+                <div class="space-y-2">
                   <div
                     v-if="customerProfile?.email"
                     class="flex items-center justify-between group"
@@ -292,13 +389,13 @@ const postComment = () => {
                     <h2 class="text-md mb-2 font-bold text-[#1E212B]">
                       Address
                     </h2>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-[#6F7177]">
                       {{ customerProfile.address }}
                     </p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-[#6F7177]">
                       {{ customerProfile.state }}
                     </p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-[#6F7177]">
                       {{ customerProfile.country }}
                     </p>
                   </div>
@@ -313,7 +410,7 @@ const postComment = () => {
                     <ul class="space-y-2 text-sm text-gray-600">
                       <li class="flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                        <span>
+                        <span class="text-[#6F7177]">
                           {{ customerProfile?.subscribe_marketing_email?.includes('subscribe_marketing_email')
                             ? 'Email subscribed'
                             : 'Email not subscribed' }}
@@ -321,7 +418,7 @@ const postComment = () => {
                       </li>
                       <li class="flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                        <span>
+                        <span class="text-[#6F7177]">
                           {{ customerProfile?.subscribe_marketing_email?.includes('subscribe_sms')
                             ? 'SMS subscribed'
                             : 'SMS not subscribed' }}
@@ -329,18 +426,38 @@ const postComment = () => {
                       </li>
                     </ul>
                   </div>
+
+                  <div
+                    v-if="extraFields.length"
+                    class="pt-3"
+                  >
+                    <h3 class="text-md mb-2 font-bold text-[#1E212B]">
+                      Extra fields
+                    </h3>
+                    <ul class="space-y-2">
+                      <li
+                        v-for="field in extraFields"
+                        :key="field.slug"
+                      >
+                        <span class="text-xs font-bold text-[#1E212B]">{{ field.label }}</span>
+                        <p class="text-sm text-gray-900">
+                          {{ field.value }}
+                        </p>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
 
-              <!-- Labels -->
+              <!-- Tags -->
               <div class="bg-white rounded-lg shadow-sm p-6">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="text-md mb-2 font-bold text-[#1E212B]">
-                    Labels
+                    Tags
                   </h3>
                   <button
                     class="p-1 hover:bg-gray-100 rounded transition-colors"
-                    @click="showLabelsEdit = !showLabelsEdit"
+                    @click="showTagsEdit = !showTagsEdit; editTagIds = [...(customerProfile?.customer_tags ?? [])]"
                   >
                     <svg
                       class="w-5 h-5 text-gray-500"
@@ -357,7 +474,31 @@ const postComment = () => {
                     </svg>
                   </button>
                 </div>
-                <div class="flex flex-wrap gap-2">
+
+                <div v-if="showTagsEdit">
+                  <GroBasicTagSelect v-model="editTagIds" />
+                  <div class="flex gap-2 mt-3">
+                    <GroBasicButton
+                      color="primary"
+                      size="xs"
+                      :disabled="isSavingTags"
+                      @click="saveTagsUpdate"
+                    >
+                      Save
+                    </GroBasicButton>
+                    <GroBasicButton
+                      color="secondary"
+                      size="xs"
+                      @click="showTagsEdit = false"
+                    >
+                      Cancel
+                    </GroBasicButton>
+                  </div>
+                </div>
+                <div
+                  v-else
+                  class="flex flex-wrap gap-2"
+                >
                   <GroReadOnlyTags :tagids="customerProfile?.customer_tags" />
                 </div>
               </div>
@@ -368,133 +509,174 @@ const postComment = () => {
                 <h2 class="text-lg font-bold text-[#1E212B]">
                   Orders
                 </h2>
-                <p class="text-[#4B4D55] text-sm mb-4">
-                  This customer hasn’t placed any orders yet
+                <p class="text-[#4B4D55] text-sm mt-2 mb-4">
+                  This customer hasn't placed any orders yet
                 </p>
                 <div>
-                  <GroBasicButton
-                    color="tertiary"
-                    size="xs"
-                    class="whitespace-nowrap w-max"
+                  <NuxtLink
+                    to="/invoices/create-new-invoice"
                   >
-                    Create Invoice
-                  </GroBasicButton>
+                    <GroBasicButton
+                      color="tertiary"
+                      size="xs"
+                      class="whitespace-nowrap w-max"
+                    >
+                      Create Invoice
+                    </GroBasicButton>
+                  </NuxtLink>
                 </div>
               </div>
 
               <!-- Timeline -->
-              <div class=" rounded-lg mt-10">
-                <h2 class="text-lg font-bold text-[#1E212B]">
+              <div class="rounded-lg mt-10">
+                <h2 class="text-lg font-bold text-[#1E212B] mb-4">
                   Timeline
                 </h2>
-                <div class="timeline-shadow rounded-lg">
-                  <div class="my-2 p-4 bg-white">
-                    <textarea
-                      v-model="comment"
-                      placeholder="Leave a comment..."
-                      class="w-full px-4 py-3 rounded-lg focus:ring-0 focus:border-transparent active:border-0 active:ring-0 resize-none text-sm"
-                      rows="3"
-                    />
-                  </div>
-                  <div>
-                    <div class="flex bg-[f5f5f5] px-4 items-center justify-between">
-                      <div class="flex items-center gap-2 gap-x-3 bg-[">
-                        <button class="hover:bg-gray-100 rounded transition-colors">
-                          <svg
-                            class="w-6 h-6 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              :stroke-width="2"
-                              d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </button>
-                        <button class="hover:bg-gray-100 rounded transition-colors">
-                          <svg
-                            class="w-6 h-6 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              :stroke-width="2"
-                              d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-                            />
-                          </svg>
-                        </button>
-                        <button class="hover:bg-gray-100 rounded transition-colors">
-                          <svg
-                            class="w-6 h-6 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              :stroke-width="2"
-                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                      <button
-                        class="px-4 py-2 my-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        :disabled="!comment.trim()"
-                        @click="postComment"
+
+                <!-- Full-width editor -->
+                <CommentEditor v-model="comment">
+                  <template #actions>
+                    <button
+                      type="button"
+                      class="px-4 py-1.5 bg-[#1E212B] hover:bg-[#2d3142] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      :disabled="!comment.trim() || isPostingComment"
+                      @click="postComment"
+                    >
+                      {{ isPostingComment ? 'Posting...' : 'Post' }}
+                    </button>
+                  </template>
+                </CommentEditor>
+                <p class="text-xs text-right text-[#6F7177] mt-1">
+                  Only you can see this comment
+                </p>
+
+                <!-- Activity entries — rail starts immediately at editor bottom -->
+                <div
+                  v-if="activities.length > 0"
+                  class="relative mt-1"
+                >
+                  <!-- Continuous vertical rail: left-3.5 = 14px = center of w-7 icon column -->
+                  <div class="absolute left-3.5 top-0 bottom-0 w-px bg-gray-200 -translate-x-1/2" />
+
+                  <div
+                    v-for="activity in activities"
+                    :key="activity.id"
+                    class="flex gap-3"
+                  >
+                    <!-- Icon node sits on top of the rail via z-10; ring-white hides the rail behind it -->
+                    <div class="w-7 shrink-0 flex justify-center pt-3">
+                      <div
+                        class="w-7 h-7 rounded-full flex items-center justify-center relative z-10 ring-2 ring-white shrink-0"
+                        :class="activity.activityType === 'comment' ? 'bg-blue-100' : 'bg-gray-100'"
                       >
-                        Post
-                      </button>
+                        <svg
+                          v-if="activity.activityType === 'comment'"
+                          class="w-3.5 h-3.5 text-blue-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                        <svg
+                          v-else
+                          class="w-3.5 h-3.5 text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 pt-2 pb-5">
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <span
+                          class="text-xs font-medium"
+                          :class="activity.activityType === 'comment' ? 'text-blue-600' : 'text-gray-500'"
+                        >
+                          {{ activity.activityType === 'comment' ? 'Comment' : 'Activity' }}
+                        </span>
+                        <span class="text-xs text-[#6F7177]">· {{ formatCustomerDuration(activity.createdAt) }} ago</span>
+                      </div>
+                      <!-- eslint-disable-next-line vue/no-v-html -->
+                      <p
+                        v-if="activity.activityType === 'comment'"
+                        class="text-sm text-gray-800 bg-gray-50 rounded-lg px-3 py-2 comment-content"
+                        v-html="activity.description"
+                      />
+                      <p
+                        v-else
+                        class="text-sm text-gray-700"
+                      >
+                        {{ activity.description }}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div class="space-y-6">
-                  <div class="flex gap-4 px-5">
-                    <div class="flex flex-col items-center">
-                      <div class="w-px h-full bg-gray-200" />
-                      <div class="w-2 h-2 rounded-full bg-[#1E212B] mt-1" />
-                    </div>
-                    <div class="flex-1 pb-6 mt-7">
-                      <p class="text-sm text-#6F7177] mb-1">
-                        {{ formatCustomerDuration(customerProfile?.createdAt) }}
-                      </p>
-                      <p class="text-sm text-gray-900">
-                        You created this customer
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <p
+                  v-else
+                  class="text-sm text-gray-400 pl-10 py-2"
+                >
+                  No activity yet
+                </p>
               </div>
             </div>
           </div>
         </div>
       </template>
     </MainDashboard>
+
+    <!-- Edit Customer Modal -->
+    <CreateCustomerModal
+      v-if="rawSubmission"
+      v-model="showEditModal"
+      :customer="{
+        submissionId: rawSubmission._id,
+        formId: rawSubmission.formID,
+        answers: customerProfile,
+      }"
+      @customer-updated="fetchCustomer"
+    />
   </div>
 </template>
 
 <style scoped>
-/* Additional custom styles if needed */
-
 .contact-box {
   box-shadow:
-    0px 1px 0px 0px #E3E3E3 inset,
-    1px 0px 0px 0px #E3E3E3 inset,
-    -1px 0px 0px 0px #E3E3E3 inset,
-    0px -1px 0px 0px #B5B5B5 inset;
+    0 1px 0 0 #E3E3E3 inset,
+    1px 0 0 0 #E3E3E3 inset,
+    -1px 0 0 0 #E3E3E3 inset,
+    0 -1px 0 0 #B5B5B5 inset;
 }
 
-.timeline-shadow {
-  box-shadow:
-    0px 1px 3px 0px #0000000A,
-    0px 1px 0px 0px #0000000A;
+/* Rich text comment rendering */
+.comment-content :deep(p) { margin: 0; }
+.comment-content :deep(p + p) { margin-top: 0.4em; }
+.comment-content :deep(ul) { list-style: disc; padding-left: 1.25rem; }
+.comment-content :deep(ol) { list-style: decimal; padding-left: 1.25rem; }
+.comment-content :deep(strong) { font-weight: 600; }
+.comment-content :deep(em) { font-style: italic; }
+.comment-content :deep(s) { text-decoration: line-through; }
+.comment-content :deep(a) { color: #2176AE; text-decoration: underline; }
+.comment-content :deep(blockquote) {
+  border-left: 3px solid #e5e7eb;
+  padding-left: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0.4rem 0;
 }
 </style>

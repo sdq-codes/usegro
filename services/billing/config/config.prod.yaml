@@ -1,0 +1,61 @@
+env: "production"
+
+app:
+  name: "Usegro"
+  nameSlug: "use-gro"
+
+httpServer:
+  port: 8090
+
+grpcServer:
+  port: 50051
+
+log:
+  level: "info"
+  stacktraceLevel: "error"
+  fileEnabled: false
+  fileSize: 10
+  filePath: "log/log.log"
+  fileCompress: false
+  maxAge: 7
+  maxBackups: 5
+
+postgres:
+  host: "${POSTGRES_HOST}"
+  port: 5432
+  database: "${POSTGRES_DB}"
+  schema: "public"
+  username: "${POSTGRES_USER}"
+  password: "" # injected via POSTGRES_PASSWORD env var (Secrets Manager)
+  maxConnections: 10
+  maxConnIdleTime: 5
+
+redis:
+  - host: "${REDIS_HOST}"
+    port: 6379
+    password: ""
+    db: 0
+
+auth:
+  apiSecret: ""  # injected via AUTH_API_SECRET env var (Secrets Manager)
+  tokenExpiryMinutes: 30
+  refreshTokenExpiryDays: 7
+
+frontEnd:
+  url: "${FRONTEND_URL}"
+
+sentry:
+  dsn: ""  # injected via SENTRY_DSN env var
+  environment: "production"
+  release: "usegro@v1.0.0"
+  debug: false
+
+scheduler:
+  timezone: "Africa/Nigeria"
+
+r2:
+  accountId: ""
+  accessKeyId: ""
+  secretAccessKey: ""
+  bucketName: "usegro-catalog-prod"
+  publicUrl: ""

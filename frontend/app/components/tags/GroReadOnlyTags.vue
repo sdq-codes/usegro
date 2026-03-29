@@ -21,7 +21,7 @@ const fetchTags = async () => {
 
 const filteredTags = computed(() => {
     if (tags.value && props.tagids) {
-      return tags.value.filter(tag => props.tagids.includes(tag.SK))
+      return tags.value.filter(tag => props.tagids.includes(tag.id))
     }
     return []
   }
@@ -35,7 +35,7 @@ onMounted(fetchTags);
     <template v-if="filteredTags.length">
       <span
         v-for="tag in filteredTags"
-        :key="tag.SK"
+        :key="tag.id"
         class="px-3 py-1 rounded-lg text-xs capitalize font-semibold bg-[#1E212B] text-white cursor-default select-none"
       >
         {{ tag.tag }}

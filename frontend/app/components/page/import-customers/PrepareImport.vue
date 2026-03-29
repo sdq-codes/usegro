@@ -51,7 +51,7 @@ const model = defineModel<number>();
       </template>
       <template #body>
         <div class="p-4 md:p-8">
-          <h4 class="font-semibold text-[#1E212B] text-lg mt-7">
+          <h4 class="font-semibold text-[#1E212B] text-lg">
             Prepare your file for import
           </h4>
           <div class="mt-6 space-y-3">
@@ -87,7 +87,7 @@ const model = defineModel<number>();
               </h6>
             </div>
           </div>
-          <div class="border border-[#EDEDEE] w-1/5 mt-10" />
+          <div class="border border-[#EDEDEE] w-3/12 mt-10" />
           <div class="flex gap-x-2 mt-9 text-sm">
             <h5>
               Not sure how to create a CSV file?

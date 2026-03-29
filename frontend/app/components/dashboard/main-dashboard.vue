@@ -15,8 +15,8 @@ const props = defineProps({
       class=""
       :current="props.current"
     />
-    <div class="bg-[#F5F5F5] overflow-y-scroll w-full py-4">
-      <div class="md:w-full lg:max-w-7xl lg:mx-auto px-4 md:px-12 py-6 md:py-16">
+      <div class="bg-[#fafafa] overflow-y-scroll w-full py-4 pt-20 pb-20 md:pt-4 md:pb-4">
+      <div class="md:w-full lg:max-w-7xl lg:mx-auto px-4 md:px-12 md:py-8">
         <slot name="title" />
         <div class="block ">
           <slot name="body" />

@@ -52,6 +52,44 @@ resource "aws_lb_target_group" "crm" {
   tags = { Name = "${local.name}-crm-tg" }
 }
 
+resource "aws_lb_target_group" "catalog" {
+  name        = "${local.name}-catalog-tg"
+  port        = 8090
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/health"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    matcher             = "200"
+  }
+
+  tags = { Name = "${local.name}-catalog-tg" }
+}
+
+resource "aws_lb_target_group" "billing" {
+  name        = "${local.name}-billing-tg"
+  port        = 8090
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/health"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    matcher             = "200"
+  }
+
+  tags = { Name = "${local.name}-billing-tg" }
+}
+
 resource "aws_lb_target_group" "frontend" {
   name        = "${local.name}-frontend-tg"
   port        = 3000
@@ -98,6 +136,36 @@ resource "aws_lb_listener" "http" {
         status_code  = "404"
       }
     }
+  }
+}
+
+resource "aws_lb_listener_rule" "http_catalog" {
+  count        = var.certificate_arn == "" ? 1 : 0
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 50
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.catalog.arn
+  }
+
+  condition {
+    path_pattern { values = ["/api/v1/crm*"] }
+  }
+}
+
+resource "aws_lb_listener_rule" "http_billing" {
+  count        = var.certificate_arn == "" ? 1 : 0
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 60
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.billing.arn
+  }
+
+  condition {
+    path_pattern { values = ["/api/v1/billing*"] }
   }
 }
 
@@ -163,6 +231,36 @@ resource "aws_lb_listener" "https" {
       message_body = "Not Found"
       status_code  = "404"
     }
+  }
+}
+
+resource "aws_lb_listener_rule" "https_catalog" {
+  count        = var.certificate_arn != "" ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 50
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.catalog.arn
+  }
+
+  condition {
+    path_pattern { values = ["/api/v1/crm*"] }
+  }
+}
+
+resource "aws_lb_listener_rule" "https_billing" {
+  count        = var.certificate_arn != "" ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 60
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.billing.arn
+  }
+
+  condition {
+    path_pattern { values = ["/api/v1/billing*"] }
   }
 }
 

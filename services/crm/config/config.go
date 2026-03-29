@@ -13,23 +13,23 @@ var config *Config
 var m sync.Mutex
 
 type Config struct {
-	Env           string        `yaml:"env"`
-	App           App           `yaml:"apps"`
-	FrontEnd      FrontEnd      `yaml:"frontEnd"`
-	HttpServer    HttpServer    `yaml:"httpServer"`
-	GrpcServer    GrpcServer    `yaml:"grpcServer"`
-	Log           Log           `yaml:"log"`
-	Scheduler     Scheduler     `yaml:"scheduler"`
-	Schedules     []Schedule    `yaml:"schedules"`
-	Postgres      Postgres      `yaml:"postgres"`
-	DynamodbForms DynamodbForms `yaml:"dynamodbForms"`
-	SSLMode       string        `yaml:"sslMode"`
-	Redis         []Redis       `yaml:"redis"`
-	Auth          Auth          `yaml:"auth"`
-	Ses           Ses           `yaml:"ses"`
-	Google        Google        `yaml:"google"`
-	Facebook      Facebook      `yaml:"facebook"`
-	Sentry        Sentry        `yaml:"sentry"`
+	Env        string     `yaml:"env"`
+	App        App        `yaml:"apps"`
+	FrontEnd   FrontEnd   `yaml:"frontEnd"`
+	HttpServer HttpServer `yaml:"httpServer"`
+	GrpcServer GrpcServer `yaml:"grpcServer"`
+	Log        Log        `yaml:"log"`
+	Scheduler  Scheduler  `yaml:"scheduler"`
+	Schedules  []Schedule `yaml:"schedules"`
+	Postgres   Postgres   `yaml:"postgres"`
+	MongoDB    MongoDB    `yaml:"mongodb"`
+	SSLMode    string     `yaml:"sslMode"`
+	Redis      []Redis    `yaml:"redis"`
+	Auth       Auth       `yaml:"auth"`
+	Ses        Ses        `yaml:"ses"`
+	Google     Google     `yaml:"google"`
+	Facebook   Facebook   `yaml:"facebook"`
+	Sentry     Sentry     `yaml:"sentry"`
 }
 
 type GrpcServer struct {
@@ -77,11 +77,9 @@ type Postgres struct {
 	MaxConnIdleTime int32  `yaml:"maxConnIdleTime"`
 }
 
-type DynamodbForms struct {
-	AwsRegion           string `yaml:"awsRegion"`
-	DynamoEndpoint      string `yaml:"dynamoEndpoint"`
-	DynamoTable         string `yaml:"dynamoTable"`
-	DynamoFormTableName string `yaml:"dynamoFormTableName"`
+type MongoDB struct {
+	URI      string `yaml:"uri"`
+	Database string `yaml:"database"`
 }
 
 type Redis struct {

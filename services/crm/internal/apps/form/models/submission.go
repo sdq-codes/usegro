@@ -19,16 +19,14 @@ const (
 )
 
 type FormSubmission struct {
-	PK            string                 `dynamodbav:"PK"`
-	SK            string                 `dynamodbav:"SK"`
-	FormID        string                 `dynamodbav:"formID"`
-	CrmID         string                 `dynamodbav:"crmID"`
-	FormVersionID string                 `dynamodbav:"formVersionID"`
-	SubmissionID  string                 `dynamodbav:"submissionID"`
-	Status        SubmissionStatus       `dynamodbav:"status"`
-	Type          SubmissionType         `dynamodbav:"type"`
-	Answers       map[string]interface{} `dynamodbav:"answers"`
-	VersionSnap   interface{}            `dynamodbav:"versionSnap"`
-	CreatedAt     time.Time              `dynamodbav:"createdAt"`
-	ArchivedAt    *time.Time             `dynamodbav:"archivedAt,omitempty"`
+	SubmissionID  string                 `bson:"_id" json:"_id"`
+	FormID        string                 `bson:"formID" json:"formID"`
+	CrmID         string                 `bson:"crmID" json:"crmID"`
+	FormVersionID string                 `bson:"formVersionID" json:"formVersionID"`
+	Status        SubmissionStatus       `bson:"status" json:"status"`
+	Type          SubmissionType         `bson:"type" json:"type"`
+	Answers       map[string]interface{} `bson:"answers" json:"answers"`
+	VersionSnap   interface{}            `bson:"versionSnap" json:"versionSnap"`
+	CreatedAt     time.Time              `bson:"createdAt" json:"createdAt"`
+	ArchivedAt    *time.Time             `bson:"archivedAt,omitempty" json:"archivedAt,omitempty"`
 }

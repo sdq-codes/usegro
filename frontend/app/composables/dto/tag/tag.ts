@@ -3,8 +3,7 @@ export interface CreateCrmTagResponse {
 }
 
 export interface FetchCrmTagResponse {
-  PK: number
-  SK: string
+  id: string
   tag: string
   crmId: string
   status: string

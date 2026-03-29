@@ -1,0 +1,42 @@
+package main
+
+import (
+	"github.com/usegro/services/catalog/internal/db/pgx"
+	"log"
+	"os"
+
+	"github.com/usegro/services/catalog/cmd"
+	"github.com/usegro/services/catalog/internal/logger"
+
+	"go.uber.org/automaxprocs/maxprocs"
+)
+
+func main() {
+	defer func() {
+		_ = os.Remove("/tmp/live")
+
+		// Close the database connection pool
+		pgx.ClosePgxPool()
+
+		// Flush the log buffer
+		if logger.Log != nil {
+			logger.Log.Sync()
+		}
+	}()
+
+	// Liveness probe for Kubernetes
+	_, err := os.Create("/tmp/live")
+	if err != nil {
+		log.Fatalf("Cannot create a Liveness file: %v", err)
+	}
+
+	// Set the maximum number of CPUs to use
+	nopLog := func(string, ...interface{}) {}
+	_, err = maxprocs.Set(maxprocs.Logger(nopLog))
+	if err != nil {
+		log.Fatalf("Cannot set maxprocs: %v", err)
+	}
+
+	// Start the apps here via CLI commands
+	cmd.Execute()
+}

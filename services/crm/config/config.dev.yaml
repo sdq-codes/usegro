@@ -30,12 +30,10 @@ postgres:
   password: "" # set via POSTGRES_PASSWORD env var
   sslMode: "disable"
 
-dynamodbForms:
-  awsRegion: "eu-west-1"
-#  dynamoEndpoint: "http://localhost:8000"
-  dynamoEndpoint: "http://usegro_dynamodb:8000"
-  dynamoTable: "crm_forms"
-  dynamoFormTableName: "forms"
+mongodb:
+#  uri: "mongodb://localhost:27017"   # use this when running locally outside Docker
+  uri: "mongodb://usegro_mongodb:27017"
+  database: "usegro"
 
 redis:
   - host: "redis"

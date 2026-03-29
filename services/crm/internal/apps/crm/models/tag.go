@@ -3,12 +3,11 @@ package models
 import "time"
 
 type Tag struct {
-	PK        string    `dynamodbav:"PK"`
-	SK        string    `dynamodbav:"SK"`
-	CrmID     string    `json:"crmID" dynamodbav:"crmID"`
-	CreatedBy string    `json:"createdBy" dynamodbav:"createdBy"`
-	Status    string    `json:"status" dynamodbav:"status"`
-	Tag       string    `json:"tag" dynamodbav:"tag"`
-	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" dynamodbav:"updatedAt"`
+	ID        string    `bson:"_id" json:"id"`
+	CrmID     string    `bson:"crmID" json:"crmID"`
+	CreatedBy string    `bson:"createdBy" json:"createdBy"`
+	Status    string    `bson:"status" json:"status"`
+	Tag       string    `bson:"tag" json:"tag"`
+	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
 }

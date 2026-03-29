@@ -51,6 +51,12 @@ const csvDataUpdated = (csvDataModel: CSVData | null) => {
   csvData.value = csvDataModel;
 };
 
+const customFieldSlugs = ref<string[]>([]);
+
+const handleCustomFieldsChanged = (slugs: string[]) => {
+  customFieldSlugs.value = slugs;
+};
+
 const createAllCustomers = async (payloads: any[]) => {
   // Run all requests in parallel
   const results = await Promise.all(
@@ -102,7 +108,7 @@ const createAllCustomers = async (payloads: any[]) => {
 watch(step, async (newVal) => {
   if (newVal === 5) {
     await createCustomer();
-    const createCustomersPayload = buildCustomerPayloads(formVersion.value, csvData.value?.data, tags.value)
+    const createCustomersPayload = buildCustomerPayloads(formVersion.value, csvData.value?.data, tags.value, customFieldSlugs.value)
     console.log(createCustomersPayload);
     await createAllCustomers(createCustomersPayload)
   }
@@ -152,6 +158,7 @@ watch(step, async (newVal) => {
         v-model:step-model="step"
         :file="uploadedFile"
         @csv-data-changed="csvDataUpdated"
+        @custom-fields-changed="handleCustomFieldsChanged"
       />
 
       <!-- Step 3: Tag selections -->

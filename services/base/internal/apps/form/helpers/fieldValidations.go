@@ -3,7 +3,6 @@ package helpers
 import (
 	"fmt"
 	"github.com/sdq-codes/usegro-api/internal/apps/form/models"
-	"github.com/sdq-codes/usegro-api/internal/apps/form/repositories"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -14,14 +13,13 @@ import (
 func ValidateSubmissionAnswers(fields []models.FormVersionField, answers map[string]interface{}) error {
 	fieldMap := make(map[string]models.FormVersionField)
 	for _, f := range fields {
-		// Extract fieldID from SK
-		fieldId := repositories.ExtractFieldIDs(f.SK)[1]
+		fieldId := f.ID
 		fieldMap[fieldId] = f
 	}
 
 	// 1. Required fields
 	for _, f := range fields {
-		fieldId := repositories.ExtractFieldIDs(f.SK)[1]
+		fieldId := f.ID
 
 		if f.Required {
 			if _, exists := answers[fieldId]; !exists {

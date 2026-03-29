@@ -30,7 +30,7 @@ func (s *Service) GetLoggedInUser(fCtx *fiber.Ctx) (*models.User, []*pb.CrmOrgan
 		return nil, nil, exception.UnauthorizedError
 	}
 
-	userID := claims.User.ID.String()
+	userID := claims.UserID
 
 	user, err := s.userRepository.GetUserById(fCtx.UserContext(), s.db, userID)
 	if err != nil {
