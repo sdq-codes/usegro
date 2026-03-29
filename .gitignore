@@ -99,6 +99,13 @@ docker-compose.override.yml
 *.pfx
 
 # ========================
+# Large data / scrape files
+# ========================
+scrapes/*.json
+services/catalog/cmd/data/
+services/catalog/database/*.json
+
+# ========================
 # Misc
 # ========================
 *.swp
