@@ -170,11 +170,12 @@ resource "aws_ecs_task_definition" "crm" {
 }
 
 resource "aws_ecs_service" "crm" {
-  name            = "${local.name}-crm"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.crm.arn
-  desired_count   = var.crm_desired_count
-  launch_type     = "FARGATE"
+  name                   = "${local.name}-crm"
+  cluster                = aws_ecs_cluster.main.id
+  task_definition        = aws_ecs_task_definition.crm.arn
+  desired_count          = var.crm_desired_count
+  launch_type            = "FARGATE"
+  enable_execute_command = true
 
   network_configuration {
     subnets          = aws_subnet.public[*].id
