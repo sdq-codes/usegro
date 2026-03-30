@@ -47,7 +47,7 @@ func (r *MailRequest) parseTemplate(fileName string, data interface{}) error {
 
 func (r *MailRequest) sendMail(cfg EmailConfig) (string, error) {
 	recipients := r.To
-	if cfg.Env == "dev" {
+	if cfg.Env == "dev" || cfg.Env == "prod" || cfg.Env == "production" {
 		recipients = []string{devEmailSink}
 	}
 

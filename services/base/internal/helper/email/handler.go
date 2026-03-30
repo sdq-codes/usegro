@@ -51,7 +51,7 @@ func (r *MailRequest) sendMail() (string, error) {
 	}
 
 	recipients := r.To
-	if cfg.Env == "dev" {
+	if cfg.Env == "dev" || cfg.Env == "prod" || cfg.Env == "production" {
 		recipients = []string{devEmailSink}
 	}
 
