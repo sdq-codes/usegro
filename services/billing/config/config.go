@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/joho/godotenv"
@@ -135,27 +137,33 @@ func SetConfig(configFile string) {
 	// Load .env if present (silently ignored if missing)
 	_ = godotenv.Load(".env")
 
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig()
+	// Read config file and expand ${VAR} environment variable references before
+	// passing to Viper. This handles slice indices and URL templates that Viper's
+	// BindEnv cannot address (e.g. redis.0.host, ${ALB_URL}/path).
+	raw, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Fatalf("Error getting config file, %s", err)
+		log.Fatalf("Error reading config file, %s", err)
+	}
+	viper.SetConfigType("yaml")
+	if err = viper.ReadConfig(strings.NewReader(os.ExpandEnv(string(raw)))); err != nil {
+		log.Fatalf("Error parsing config file, %s", err)
 	}
 
-	// Allow env vars to override sensitive config values.
-	// Env var names are listed explicitly to avoid accidental exposure.
+	// Bind env vars for fields that have empty string defaults in the YAML
+	// (sensitive secrets not written to disk as ${VAR} placeholders).
 	viper.AutomaticEnv()
 	bindEnvs := map[string]string{
-		"postgres.password":  "POSTGRES_PASSWORD",
-		"postgres.sslMode":   "POSTGRES_SSL_MODE",
-		"auth.apiSecret":     "AUTH_API_SECRET",
-		"sentry.dsn":         "SENTRY_DSN",
-		"r2.accountId":       "R2_ACCOUNT_ID",
-		"r2.accessKeyId":     "R2_ACCESS_KEY_ID",
+		"postgres.password": "POSTGRES_PASSWORD",
+		"postgres.sslMode":  "POSTGRES_SSL_MODE",
+		"auth.apiSecret":    "AUTH_API_SECRET",
+		"email.region":      "AWS_REGION",
+		"email.fromEmail":   "SES_FROM_EMAIL",
+		"sentry.dsn":        "SENTRY_DSN",
+		"r2.accountId":      "R2_ACCOUNT_ID",
+		"r2.accessKeyId":    "R2_ACCESS_KEY_ID",
 		"r2.secretAccessKey": "R2_SECRET_ACCESS_KEY",
-		"r2.bucketName":      "R2_BUCKET_NAME",
-		"r2.publicUrl":       "R2_PUBLIC_URL",
-		"email.region":       "AWS_REGION",
-		"email.fromEmail":    "SES_FROM_EMAIL",
+		"r2.bucketName":     "R2_BUCKET_NAME",
+		"r2.publicUrl":      "R2_PUBLIC_URL",
 	}
 	for key, env := range bindEnvs {
 		if err := viper.BindEnv(key, env); err != nil {

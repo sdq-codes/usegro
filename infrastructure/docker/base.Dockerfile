@@ -6,7 +6,7 @@ COPY services/base/go.mod services/base/go.sum ./
 RUN go mod download
 COPY services/shared/ /shared/
 COPY services/base/ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o base-service ./cmd
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o base-service .
 
 FROM --platform=linux/amd64 alpine:3.19
 RUN apk --no-cache add ca-certificates tzdata

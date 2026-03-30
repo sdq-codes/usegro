@@ -6,7 +6,7 @@ COPY services/crm/go.mod services/crm/go.sum ./
 RUN go mod download
 COPY services/shared/ /shared/
 COPY services/crm/ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o crm-service ./cmd
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o crm-service .
 
 FROM --platform=linux/amd64 alpine:3.19
 RUN apk --no-cache add ca-certificates tzdata
