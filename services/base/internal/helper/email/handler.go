@@ -103,7 +103,8 @@ func (r *MailRequest) sendMail() (string, error) {
 func (r *MailRequest) Send(templateName string, items interface{}) {
 	err := r.parseTemplate(templateName, items)
 	if err != nil {
-		logger.Log.Fatal(fmt.Sprintf("The right error %v", err))
+		logger.Log.Error(fmt.Sprintf("Failed to parse email template: %v", err))
+		return
 	}
 
 	_, err = r.sendMail()
