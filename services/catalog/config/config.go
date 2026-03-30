@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/joho/godotenv"
@@ -129,14 +131,20 @@ func SetConfig(configFile string) {
 	// Load .env if present (silently ignored if missing)
 	_ = godotenv.Load(".env")
 
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig()
+	// Read config file and expand ${VAR} environment variable references before
+	// passing to Viper. This handles slice indices and URL templates that Viper's
+	// BindEnv cannot address (e.g. redis.0.host, ${ALB_URL}/path).
+	raw, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Fatalf("Error getting config file, %s", err)
+		log.Fatalf("Error reading config file, %s", err)
+	}
+	viper.SetConfigType("yaml")
+	if err = viper.ReadConfig(strings.NewReader(os.ExpandEnv(string(raw)))); err != nil {
+		log.Fatalf("Error parsing config file, %s", err)
 	}
 
-	// Allow env vars to override sensitive config values.
-	// Env var names are listed explicitly to avoid accidental exposure.
+	// Bind env vars for fields that have empty string defaults in the YAML
+	// (sensitive secrets not written to disk as ${VAR} placeholders).
 	viper.AutomaticEnv()
 	bindEnvs := map[string]string{
 		"postgres.password":  "POSTGRES_PASSWORD",
