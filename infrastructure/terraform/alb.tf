@@ -150,7 +150,7 @@ resource "aws_lb_listener_rule" "http_catalog" {
   }
 
   condition {
-    path_pattern { values = ["/api/v1/crm*"] }
+    path_pattern { values = ["/api/v1/catalog*"] }
   }
 }
 
@@ -245,7 +245,7 @@ resource "aws_lb_listener_rule" "https_catalog" {
   }
 
   condition {
-    path_pattern { values = ["/api/v1/crm*"] }
+    path_pattern { values = ["/api/v1/catalog*"] }
   }
 }
 

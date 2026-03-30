@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	fiberSwagger "github.com/swaggo/fiber-swagg
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 	_ "github.com/usegro/services/catalog/docs"
 	httpInterface "github.com/usegro/services/catalog/internal/interface/http"
 	httpError "github.com/usegro/services/catalog/internal/interface/http/error"

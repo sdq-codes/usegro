@@ -7,7 +7,7 @@ import (
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/usegro/services/catalog/config"
 	"github.com/usegro/services/catalog/internal/interface/response"
-	
+	"github.com/usegro/services/catalog/internal/models"
 )
 
 func JwtVerify() fiber.Handler {

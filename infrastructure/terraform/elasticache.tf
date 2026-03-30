@@ -19,6 +19,7 @@ resource "aws_elasticache_replication_group" "main" {
   port                       = 6379
   at_rest_encryption_enabled = true
   transit_encryption_enabled  = true
+  transit_encryption_mode     = "preferred"
   apply_immediately           = true
 
   automatic_failover_enabled = false

@@ -2,10 +2,9 @@ package invoiceRoutes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	invoiceControllers "github.com/usegro/services/billing/int
 	invoiceControllers "github.com/usegro/services/billing/internal/apps/invoice/controllers"
 	invoiceServices "github.com/usegro/services/billing/internal/apps/invoice/services"
-	"github.com/gofiber/fiber/v2"
+	"github.com/usegro/services/billing/internal/router/middleware"
 	"gorm.io/gorm"
 )
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm/clause"
 	"github.com/usegro/services/catalog/database"
 	"github.com/usegro/services/catalog/internal/apps/catalog/models"
 	"github.com/usegro/services/catalog/internal/logger"
@@ -155,7 +156,9 @@ var seedStandardCategoriesCommand = &cobra.Command{
 			if end > len(joins) {
 				end = len(joins)
 			}
-			if err := db.Table("standard_category_attributes").Save(joins[i:end]).Error; err != nil {
+			if err := db.Table("standard_category_attributes").
+				Clauses(clause.OnConflict{DoNothing: true}).
+				Create(joins[i:end]).Error; err != nil {
 				logger.Log.Fatal("failed to upsert category-attribute links", zap.Int("offset", i), zap.Error(err))
 			}
 		}

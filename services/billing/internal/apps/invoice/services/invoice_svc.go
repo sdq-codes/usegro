@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	invoiceDTO "github.com/usegro/services/billing/
 	invoiceDTO "github.com/usegro/services/billing/internal/apps/invoice/dto"
 	invoiceModels "github.com/usegro/services/billing/internal/apps/invoice/models"
 	invoiceRepositories "github.com/usegro/services/billing/internal/apps/invoice/repositories"
 	"github.com/usegro/services/billing/internal/logger"
-	"github.com/google/uuid"
+	sharedemail "github.com/usegro/services/shared/pkg/email"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )

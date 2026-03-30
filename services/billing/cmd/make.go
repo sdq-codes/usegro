@@ -7,7 +7,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 	"github.com/spf13/cobra"
-	"github.com/usegr
+	"github.com/usegro/services/billing/internal/logger"
 	"go.uber.org/zap"
 )
 

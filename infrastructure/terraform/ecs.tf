@@ -5,6 +5,7 @@ locals {
     { name = "POSTGRES_PORT", value = "5432" },
     { name = "POSTGRES_DB", value = var.db_name },
     { name = "POSTGRES_USER", value = var.db_username },
+    { name = "POSTGRES_SSL_MODE", value = "require" },
     { name = "REDIS_HOST", value = aws_elasticache_replication_group.main.primary_endpoint_address },
     { name = "REDIS_PORT", value = "6379" },
     { name = "AWS_REGION", value = var.aws_region },

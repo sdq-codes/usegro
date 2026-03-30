@@ -2,7 +2,7 @@ package invoiceRepositories
 
 import (
 	"github.com/google/uuid"
-	invoiceModels 
+	invoiceModels "github.com/usegro/services/billing/internal/apps/invoice/models"
 	"gorm.io/gorm"
 )
 
