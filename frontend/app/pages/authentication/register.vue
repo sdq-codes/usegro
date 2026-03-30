@@ -64,7 +64,7 @@ const loginWithGoogle = () => {
   const left = window.screenX + (window.outerWidth - width) / 2
   const top = window.screenY + (window.outerHeight - height) / 2
 
-  const base = (import.meta.env.NUXT_PUBLIC_API_BASE as string | undefined) || 'http://localhost/api/v1'
+  const base = (useRuntimeConfig().public.apiBase as string) || 'http://localhost/api/v1'
   const googleLoginUrl = `${base.replace(/\/$/, '')}/base/authentication/google/login`
 
 
