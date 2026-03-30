@@ -8,6 +8,12 @@ output "alb_zone_id" {
   value       = aws_lb.main.zone_id
 }
 
+output "docdb_endpoint" {
+  description = "DocumentDB cluster endpoint"
+  value       = aws_docdb_cluster.main.endpoint
+  sensitive   = true
+}
+
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint"
   value       = aws_db_instance.main.endpoint

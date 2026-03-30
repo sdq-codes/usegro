@@ -8,6 +8,7 @@ locals {
     facebook_app_secret  = var.facebook_app_secret
     sentry_dsn           = var.sentry_dsn
     stripe_secret_key    = var.stripe_secret_key
+    mongodb_uri          = "mongodb://usegroadmin:${var.mongodb_password}@${aws_docdb_cluster.main.endpoint}:27017/${var.mongodb_database}"
   }
 }
 

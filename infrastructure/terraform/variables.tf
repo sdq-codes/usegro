@@ -120,6 +120,18 @@ variable "stripe_secret_key" {
   default     = ""
 }
 
+variable "mongodb_password" {
+  description = "DocumentDB master password"
+  type        = string
+  sensitive   = true
+}
+
+variable "mongodb_database" {
+  description = "MongoDB/DocumentDB database name"
+  type        = string
+  default     = "usegro"
+}
+
 
 # ─── ECS ────────────────────────────────────────────────────────────────────
 

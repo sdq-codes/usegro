@@ -18,6 +18,14 @@ locals {
     { name = "SENTRY_DSN", valueFrom = aws_secretsmanager_secret.app["sentry_dsn"].arn },
   ]
 
+  mongodb_secrets = [
+    { name = "MONGODB_URI", valueFrom = aws_secretsmanager_secret.app["mongodb_uri"].arn },
+  ]
+
+  mongodb_env = [
+    { name = "MONGODB_DATABASE", value = var.mongodb_database },
+  ]
+
   base_extra_secrets = [
     { name = "GOOGLE_CLIENT_SECRET", valueFrom = aws_secretsmanager_secret.app["google_client_secret"].arn },
     { name = "FACEBOOK_APP_SECRET", valueFrom = aws_secretsmanager_secret.app["facebook_app_secret"].arn },
@@ -65,14 +73,14 @@ resource "aws_ecs_task_definition" "base" {
 
     portMappings = [{ containerPort = 8090, protocol = "tcp" }]
 
-    environment = concat(local.common_go_env, [
+    environment = concat(local.common_go_env, local.mongodb_env, [
       { name = "HTTP_PORT", value = "8090" },
       { name = "GOOGLE_CLIENT_ID", value = var.google_client_id },
       { name = "FACEBOOK_APP_ID", value = var.facebook_app_id },
       { name = "FRONTEND_URL", value = var.domain_name != "" ? "https://${var.domain_name}" : "" },
     ])
 
-    secrets = concat(local.common_go_secrets, local.base_extra_secrets)
+    secrets = concat(local.common_go_secrets, local.base_extra_secrets, local.mongodb_secrets)
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -136,7 +144,7 @@ resource "aws_ecs_task_definition" "crm" {
       { containerPort = 50051, protocol = "tcp" },
     ]
 
-    environment = concat(local.common_go_env, [
+    environment = concat(local.common_go_env, local.mongodb_env, [
       { name = "HTTP_PORT", value = "8090" },
       { name = "GRPC_PORT", value = "50051" },
       { name = "DYNAMO_ENDPOINT", value = "" },
@@ -146,7 +154,7 @@ resource "aws_ecs_task_definition" "crm" {
       { name = "ALB_URL", value = "http://${aws_lb.main.dns_name}" },
     ])
 
-    secrets = local.common_go_secrets
+    secrets = concat(local.common_go_secrets, local.mongodb_secrets)
 
     logConfiguration = {
       logDriver = "awslogs"
