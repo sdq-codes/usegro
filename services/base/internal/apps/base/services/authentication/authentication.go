@@ -2,9 +2,7 @@ package authentication
 
 import (
 	"context"
-	cryptoRand "crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -82,7 +80,7 @@ func (s *Service) RegisterUser(ctx context.Context, userDTI dto.RegisterUserDTI)
 		return nil, "", "", err
 	}
 
-	userModel := &models.User{Email: userDTI.Email, Password: hashedPassword}
+	userModel := &models.User{Email: userDTI.Email, Password: &hashedPassword, AuthProvider: "password"}
 	if err = s.userRepository.CreateUser(ctx, tx, userModel); err != nil {
 		tx.Rollback()
 		return nil, "", "", err
@@ -123,7 +121,7 @@ func (s *Service) RegisterUser(ctx context.Context, userDTI dto.RegisterUserDTI)
 		return nil, "", "", err
 	}
 
-	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser)
+	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser, "", time.Time{})
 	if err != nil {
 		tx.Rollback()
 		return nil, "", "", err
@@ -153,7 +151,17 @@ func (s *Service) LoginUser(ctx context.Context, loginDTO dto.RegisterUserDTI) (
 		return nil, "", "", exception.IncorrectUserNameAndPasswordRequestBodyError
 	}
 
-	if err := encryption.ComparePassword(user.Password, loginDTO.Password); err != nil {
+	if user.AuthProvider != "password" {
+		tx.Rollback()
+		return nil, "", "", exception.GoogleUserTriedPasswordLoginError
+	}
+
+	if user.Password == nil {
+		tx.Rollback()
+		return nil, "", "", exception.IncorrectUserNameAndPasswordRequestBodyError
+	}
+
+	if err := encryption.ComparePassword(*user.Password, loginDTO.Password); err != nil {
 		tx.Rollback()
 		return nil, "", "", exception.IncorrectUserNameAndPasswordRequestBodyError
 	}
@@ -166,7 +174,7 @@ func (s *Service) LoginUser(ctx context.Context, loginDTO dto.RegisterUserDTI) (
 		return nil, "", "", err
 	}
 
-	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser)
+	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser, "", time.Time{})
 	if err != nil {
 		tx.Rollback()
 		return nil, "", "", err
@@ -205,11 +213,13 @@ func (s *Service) userIDFromRefreshToken(ctx context.Context, rawToken string) s
 	if err != nil {
 		return ""
 	}
-	var u models.User
-	if json.Unmarshal(b, &u) != nil {
+	var data struct {
+		User models.User `json:"user"`
+	}
+	if json.Unmarshal(b, &data) != nil {
 		return ""
 	}
-	return u.ID.String()
+	return data.User.ID.String()
 }
 
 // SendPasswordResetEmail generates an opaque token, stores it in Redis, and emails a reset link.
@@ -305,7 +315,7 @@ func (s *Service) ResetUserPassword(ctx context.Context, req dto.ResetPasswordDT
 		tx.Rollback()
 		return err
 	}
-	user.Password = hashedPassword
+	user.Password = &hashedPassword
 
 	if err := s.userRepository.UpdateUser(ctx, tx, user); err != nil {
 		tx.Rollback()
@@ -382,19 +392,13 @@ func (s *Service) GoogleLogin(ctx context.Context, code string) (*models.User, s
 			tx.Rollback()
 			return nil, "", "", err
 		}
+		if user.AuthProvider != "google" {
+			tx.Rollback()
+			return nil, "", "", exception.PasswordUserTriedGoogleLoginError
+		}
 	} else {
-		b := make([]byte, 32)
-		if _, err := cryptoRand.Read(b); err != nil {
-			tx.Rollback()
-			return nil, "", "", err
-		}
-		hashedPassword, err := encryption.HashPassword(base64.StdEncoding.EncodeToString(b))
-		if err != nil {
-			tx.Rollback()
-			return nil, "", "", err
-		}
-
-		user = &models.User{Email: googleUser.Email, Password: hashedPassword}
+		googleID := googleUser.ID
+		user = &models.User{Email: googleUser.Email, GoogleID: &googleID, AuthProvider: "google"}
 		if err = s.userRepository.CreateUser(ctx, tx, user); err != nil {
 			tx.Rollback()
 			return nil, "", "", err
@@ -421,7 +425,7 @@ func (s *Service) GoogleLogin(ctx context.Context, code string) (*models.User, s
 		return nil, "", "", err
 	}
 
-	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser)
+	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser, "", time.Time{})
 	if err != nil {
 		tx.Rollback()
 		return nil, "", "", err
@@ -481,10 +485,15 @@ func (s *Service) RequestLoginCode(ctx context.Context, req dto.RequestEmailCode
 
 // VerifyLoginCode validates the code and returns a token pair on success.
 func (s *Service) VerifyLoginCode(ctx context.Context, req dto.VerifyEmailCodeDTI) (*models.User, string, string, error) {
-	stored, err := s.rdb.GetDel(ctx, loginCodePrefix+req.Email).Result()
-	if err != nil || stored == "" || stored != req.Code {
+	key := loginCodePrefix + req.Email
+	stored, err := s.rdb.Get(ctx, key).Result()
+	if err != nil || stored == "" {
 		return nil, "", "", exception.InvalidLoginCodeError
 	}
+	if stored != req.Code {
+		return nil, "", "", exception.InvalidLoginCodeError
+	}
+	s.rdb.Del(ctx, key)
 
 	tx := s.db.Begin()
 	user, err := s.userRepository.GetUser(ctx, tx, req.Email)
@@ -500,7 +509,7 @@ func (s *Service) VerifyLoginCode(ctx context.Context, req dto.VerifyEmailCodeDT
 		return nil, "", "", err
 	}
 
-	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser)
+	refreshToken, err := auth.CreateRefreshToken(ctx, s.rdb, minimalUser, "", time.Time{})
 	if err != nil {
 		return nil, "", "", err
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/usegro/services/crm/config"
 	"github.com/usegro/services/crm/database"
-	"github.com/usegro/services/crm/database/dynamo"
+	"github.com/usegro/services/crm/database/mongodb"
 	crmRouter "github.com/usegro/services/crm/internal/apps/crm/routes"
 )
 
@@ -18,12 +18,12 @@ func RegisterRoute(r *fiber.App) {
 	}
 	rdb := database.SingleRdb
 
-	dynamoCfg := config.GetConfig().DynamodbForms
-	err = dynamo.InitDynamoFormClient(dynamoCfg.DynamoEndpoint, dynamoCfg.AwsRegion)
+	mongoCfg := config.GetConfig().MongoDB
+	err = mongodb.InitMongoClient(mongoCfg.URI, mongoCfg.Database)
 	if err != nil {
 		return
 	}
-	dynamodbForms := dynamo.DynamoClient
+	mongoDB := mongodb.GetMongoDatabase()
 
 	r.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
@@ -32,10 +32,9 @@ func RegisterRoute(r *fiber.App) {
 	api := r.Group("/api")
 	v1 := api.Group("/v1")
 
-	crmRouter.CrmRouter(v1, db, rdb, dynamodbForms)
+	crmRouter.CrmRouter(v1, db, rdb, mongoDB)
 
 	r.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Not found"})
 	})
-
 }

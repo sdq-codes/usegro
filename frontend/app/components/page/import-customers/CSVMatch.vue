@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {defineModel, ref, watch} from 'vue';
+import {computed, defineModel, ref, watch} from 'vue';
 import Papa from 'papaparse';
 import {
   CheckmarkCircle01Icon,
@@ -27,12 +27,15 @@ interface ColumnValidation {
   coverage: number;
 }
 
+const CUSTOM_FIELD_VALUE = '__custom__';
+
 const props = defineProps<Props>();
 const stepModel = defineModel<number>("stepModel");
 const csvData = defineModel<CSVData | null>("csvDataModel");
 
 const emit = defineEmits<{
   (e: "csvDataChanged", value: CSVData | null): void;
+  (e: "customFieldsChanged", value: string[]): void;
 }>();
 
 watch(csvData, (newVal) => {
@@ -43,6 +46,14 @@ watch(csvData, (newVal) => {
 const mappings = ref<Record<string, string>>({});
 const confirmedColumns = ref<Set<string>>(new Set());
 const ignoredColumns = ref<Set<string>>(new Set());
+
+const confirmedCustomSlugs = computed(() =>
+  Array.from(confirmedColumns.value).filter(col => mappings.value[col] === CUSTOM_FIELD_VALUE)
+);
+
+watch(confirmedCustomSlugs, (val) => {
+  emit("customFieldsChanged", val);
+});
 
 
 // Form fields from your JSON
@@ -123,9 +134,10 @@ const getColumnLetter = (index: number) => {
   return String.fromCharCode(65 + index);
 };
 
-const getColumnStatus = (csvColumn: string): 'confirmed' | 'ignored' | 'unmatched' | 'matched' => {
+const getColumnStatus = (csvColumn: string): 'confirmed' | 'ignored' | 'unmatched' | 'matched' | 'custom' => {
   if (confirmedColumns.value.has(csvColumn)) return 'confirmed';
   if (ignoredColumns.value.has(csvColumn)) return 'ignored';
+  if (mappings.value[csvColumn] === CUSTOM_FIELD_VALUE) return 'custom';
   if (mappings.value[csvColumn]) return 'matched';
   return 'unmatched';
 };
@@ -347,6 +359,12 @@ watch(() => props.file, (newFile) => {
                           >
                             {{ field.label }}
                           </option>
+                          <option disabled>
+                            ──────────────
+                          </option>
+                          <option :value="CUSTOM_FIELD_VALUE">
+                            Save as new field
+                          </option>
                         </select>
                       </div>
                     </div>
@@ -496,6 +514,47 @@ watch(() => props.file, (newFile) => {
                       </GroBasicButton>
                     </div>
                   </template>
+                  <!-- Custom new field -->
+                  <template v-else-if="mappings[csvColumn] === CUSTOM_FIELD_VALUE && !isColumnIgnored(csvColumn)">
+                    <div
+                      v-if="!isColumnConfirmed(csvColumn)"
+                      class="space-y-3"
+                    >
+                      <div class="flex items-start gap-2">
+                        <div class="w-5 h-5 shrink-0 mt-0.5 rounded-full bg-[#2176AE] flex items-center justify-center">
+                          <span class="text-xs text-white font-bold">+</span>
+                        </div>
+                        <div class="text-sm font-semibold text-[#1E212B]">
+                          Will be saved as a new field:
+                          <span class="bg-[#F5F6F7] px-2 py-1 rounded font-medium">{{ csvColumn }}</span>
+                        </div>
+                      </div>
+                      <p class="text-sm text-[#6F7177]">
+                        This column doesn't match an existing field. It will be stored as a custom property on the customer.
+                      </p>
+                      <div class="flex gap-3">
+                        <GroBasicButton
+                          color="primary"
+                          size="sm"
+                          class="w-max"
+                          shape="custom"
+                          @click="confirmMapping(csvColumn)"
+                        >
+                          Confirm
+                        </GroBasicButton>
+                        <GroBasicButton
+                          color="tertiary"
+                          size="sm"
+                          class="w-max"
+                          shape="custom"
+                          @click="ignoreColumn(csvColumn)"
+                        >
+                          Ignore this column
+                        </GroBasicButton>
+                      </div>
+                    </div>
+                  </template>
+
                   <div
                     v-else-if="!isColumnIgnored(csvColumn)"
                     class="space-y-4"

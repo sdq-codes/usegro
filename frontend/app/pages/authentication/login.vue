@@ -76,7 +76,7 @@ const submitLogin = async () => {
   }
 
   setAccessToken(result.data?.data?.access_token)
-  localStorage.setItem('refresh_token', result.data?.data?.refresh_token)
+  localStorage.setItem('session', '1')
   notify(result.data?.response_message, 'success')
   router.push('/dashboard')
 }
@@ -118,7 +118,7 @@ const submitEmailCode = async () => {
   }
 
   setAccessToken(result.data?.data?.access_token)
-  localStorage.setItem('refresh_token', result.data?.data?.refresh_token)
+  localStorage.setItem('session', '1')
   notify(result.data?.response_message || 'Signed in successfully', 'success')
   router.push('/dashboard')
 }
@@ -132,8 +132,11 @@ const loginWithGoogle = () => {
   const left = window.screenX + (window.outerWidth - width) / 2
   const top = window.screenY + (window.outerHeight - height) / 2
 
+  const base = (import.meta.env.NUXT_PUBLIC_API_BASE as string | undefined) || 'http://localhost/api/v1'
+  const googleLoginUrl = `${base.replace(/\/$/, '')}/base/authentication/google/login`
+
   popupRef = window.open(
-    'http://localhost:8090/api/v1/authentication/google/login',
+    googleLoginUrl,
     'Google Login',
     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
   )
@@ -145,14 +148,17 @@ if (process.client) {
 
     if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
       setAccessToken(event.data.accessToken)
-      localStorage.setItem('refresh_token', event.data.refreshToken)
+      localStorage.setItem('session', '1')
       popupRef = null
       router.push('/dashboard')
     }
 
     if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
-      apiErrors.value = ['Google login failed. Please try again.']
-      notify('Google login failed. Please try again.', 'error')
+      const msg = event.data.error === 'provider_mismatch_password'
+        ? 'Account can only use password login'
+        : 'Google login failed. Please try again.'
+      apiErrors.value = [msg]
+      notify(msg, 'error')
       popupRef = null
     }
   })

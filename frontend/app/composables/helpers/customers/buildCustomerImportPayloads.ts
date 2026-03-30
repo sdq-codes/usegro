@@ -11,7 +11,8 @@ type CreateCustomerPayload = {
 export function buildCustomerPayloads(
   formVersionData: FormVersionResponse,
   importedCustomers: ImportedCustomer[],
-  sharedTags: string[]
+  sharedTags: string[],
+  customFieldSlugs: string[] = []
 ): CreateCustomerPayload[] {
   const fields = formVersionData.fields;
 
@@ -62,6 +63,13 @@ export function buildCustomerPayloads(
       }
 
       answers[slug] = value;
+    }
+
+    // Add custom (unmapped) fields
+    for (const slug of customFieldSlugs) {
+      if (slug in customer) {
+        answers[slug] = customer[slug];
+      }
     }
 
     // Add shared tags

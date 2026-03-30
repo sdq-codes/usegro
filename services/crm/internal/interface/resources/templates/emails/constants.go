@@ -9,5 +9,5 @@ const (
 
 // From emails
 const (
-	NO_REPLY_EMAIL string = "oyebola.sd@gmail.com"
+	NO_REPLY_EMAIL string = "usegroapp@gmail.com"
 )

@@ -1,6 +1,6 @@
 interface StateOption {
   id: string
-  name: string
+  label: string
   stateCode: string
   countryId: string
 }

@@ -120,6 +120,18 @@ variable "stripe_secret_key" {
   default     = ""
 }
 
+variable "mongodb_password" {
+  description = "DocumentDB master password"
+  type        = string
+  sensitive   = true
+}
+
+variable "mongodb_database" {
+  description = "MongoDB/DocumentDB database name"
+  type        = string
+  default     = "usegro"
+}
+
 
 # ─── ECS ────────────────────────────────────────────────────────────────────
 
@@ -131,6 +143,18 @@ variable "base_desired_count" {
 
 variable "crm_desired_count" {
   description = "Desired task count for crm service"
+  type        = number
+  default     = 1
+}
+
+variable "catalog_desired_count" {
+  description = "Desired task count for catalog service"
+  type        = number
+  default     = 1
+}
+
+variable "billing_desired_count" {
+  description = "Desired task count for billing service"
   type        = number
   default     = 1
 }

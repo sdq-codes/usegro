@@ -1,0 +1,66 @@
+env: "dev" # dev, staging, production
+app:
+  key: "my-apps-key"
+  name: "My App"
+  nameSlug: "use-gro"
+
+httpServer:
+  port: 8090
+
+grpcServer:
+  port: 50051
+
+log:
+  level: "debug"
+  stacktraceLevel: "error" # debug, info, warn, error, dpanic, panic, fatal
+  fileEnabled: false
+  fileSize: 10 # MB
+  filePath: "log/log.log"
+  fileCompress: false # enable log file compress before rotate
+  maxAge: 1 # days to keep log files
+  maxBackups: 10 # number of log files
+
+postgres:
+#  host: "localhost" # use "host.docker.internal" if you run apps inside docker container
+  host: "postgres" # use "host.docker.internal" if you run apps inside docker container
+  port: 5432
+  database: "usegro"
+  schema: "public"
+  username: "usegro"
+  password: "" # set via POSTGRES_PASSWORD env var
+  sslMode: "disable"
+
+redis:
+  - host: "redis"
+#  - host: "localhost"
+    port: 6379
+    password: ""
+    db: 0
+
+auth:
+  apiSecret: "" # set via AUTH_API_SECRET env var
+  tokenExpiryMinutes: 30
+  refreshTokenExpiryDays: 7
+
+frontEnd:
+  url: "http://localhost:3000"
+
+sentry:
+  dsn: ""          # set via SENTRY_DSN env var
+  environment: "DEV"
+  release: "go-boilerplate@v0.1.0"
+  debug: false
+
+scheduler:
+  timezone: "Africa/Nigeria"
+
+r2:
+  accountId: ""
+  accessKeyId: ""
+  secretAccessKey: ""
+  bucketName: "usegro-catalog-dev"
+  publicUrl: ""
+
+# schedules:
+#   - cron: "0 */20 * * * *"
+#     job: "SyncAll"

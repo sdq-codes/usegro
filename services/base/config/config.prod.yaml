@@ -27,11 +27,9 @@ postgres:
   maxConnections: 10
   maxConnIdleTime: 5
 
-dynamodbForms:
-  awsRegion: "${AWS_REGION}"
-  dynamoEndpoint: "" # empty = use AWS managed DynamoDB
-  dynamoTable: "crm_forms"
-  dynamoFormTableName: "forms"
+mongodb:
+  uri: "${MONGODB_URI}"
+  database: "${MONGODB_DATABASE}"
 
 redis:
   - host: "${REDIS_HOST}"
@@ -41,8 +39,9 @@ redis:
 
 auth:
   apiSecret: ""  # injected via AUTH_API_SECRET env var (Secrets Manager)
-  tokenExpiryMinutes: 30
-  refreshTokenExpiryDays: 7
+  tokenExpiryMinutes: 15
+  refreshTokenExpiryDays: 2
+  maxSessionDays: 30
 
 ses:
   region: "${AWS_REGION}"

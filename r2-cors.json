@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {
+      "allowedOrigins": ["http://localhost:3000"],
+      "allowedMethods": ["PUT"],
+      "allowedHeaders": ["Content-Type"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

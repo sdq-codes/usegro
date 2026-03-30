@@ -1,17 +1,33 @@
 <script setup lang="ts">
 
+import {computed, onMounted, ref, defineModel, defineEmits} from "vue";
 import {PlusSignIcon} from "@hugeicons/core-free-icons";
 import BasicModal from "@/components/modals/basic-modal.vue";
 import DynamicForm from "@/components/forms/form/DynamicForm.vue";
 import {HugeiconsIcon} from "@hugeicons/vue";
 import GroBasicButton from "@/components/buttons/GroBasicButton.vue";
 import GroBasicDropUp from "@/components/dropdown/GroBasicDropUp.vue";
-import {onMounted, ref, defineModel, defineEmits} from "vue";
 import {useFormAPI} from "@/composables/api/customer/forms/create";
 import type {FormField} from "@/composables/helpers/types/form";
 import {notify} from "@/composables/helpers/notification/notification";
 import {useFormFieldManager} from "@/composables/helpers/managers/forms/useFormFieldManager";
 import {validateFormWithConditions} from "@/composables/helpers/validation/forms/createCustomer";
+
+interface CustomerEditData {
+  submissionId: string
+  formId: string
+  answers: Record<string, unknown>
+}
+
+interface Props {
+  customer?: CustomerEditData
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  customer: undefined
+})
+
+const isEditMode = computed(() => !!props.customer)
 
 const { getDefaultValue, addField } = useFormFieldManager()
 
@@ -24,13 +40,24 @@ const formFields = ref<FormField[]>([])
 const answerMap = ref<Record<string, string | string[]>>({})
 const validationErrors = ref<Record<string, string | string[]>>({});
 
+const updateCustomerApi = async () => {
+  if (!props.customer) return false
+  const result = await useFormAPI().UpdateSubmission(
+    props.customer.formId,
+    props.customer.submissionId,
+    answerMap.value as Record<string, unknown>
+  )
+  emit('customer-updated')
+  return result.success
+}
+
 const createCustomerApi = async () => {
   const formData = {
     type: "customer",
     answers: answerMap.value,
     versionSnap: formFields.value,
   }
-  const createdCustomer = await useFormAPI().CreateCustomer(formVersion.value?.formID, formVersion.value?.SK.split("#")[1], formData)
+  const createdCustomer = await useFormAPI().CreateCustomer(formVersion.value?.formID, formVersion.value?.id, formData)
   emit('new-customer-added')
   return createdCustomer.success
 }
@@ -63,7 +90,7 @@ const validateCustomer = () => {
   }
 };
 
-const createCustomer = async () => {
+const initForm = async () => {
   isLoading.value = true
 
   try {
@@ -79,6 +106,14 @@ const createCustomer = async () => {
         acc[field.slug] = getDefaultValue(field)
         return acc
       }, {})
+
+      // In edit mode, overlay with existing answers
+      if (isEditMode.value && props.customer) {
+        answerMap.value = {
+          ...answerMap.value,
+          ...props.customer.answers as Record<string, string | string[]>,
+        }
+      }
     }
   } catch (error) {
     console.error('Error fetching form:', error)
@@ -91,12 +126,21 @@ const saveCustomer = async () => {
   validateCustomer()
   if (Object.keys(validationErrors.value).length !== 0) {
     return
+  }
+
+  if (isEditMode.value) {
+    const success = await updateCustomerApi()
+    if (success) {
+      notify("Customer was successfully updated", "success")
+      model.value = false
+    } else {
+      notify("Customer could not be updated", "error")
+    }
   } else {
     const customerCreation = await createCustomerApi();
     if (customerCreation) {
       notify("Customer was successfully created", "success")
       model.value = false;
-      await allCustomers()
     } else {
       notify("Customer could not be created", "error")
     }
@@ -111,8 +155,7 @@ const saveAndCreateAnother = async () => {
     const customerCreation = await createCustomerApi();
     if (customerCreation) {
       notify("Customer was successfully created", "success")
-      await allCustomers()
-      await createCustomer()
+      await initForm()
     } else {
       notify("Customer could not be created", "error")
     }
@@ -121,17 +164,21 @@ const saveAndCreateAnother = async () => {
 
 const handleAddField = (type: string) => {
   const newField = addField(type, formFields.value, answerMap.value)
-  if (newField) {
+  if (!newField) return
+  if (Array.isArray(newField)) {
+    formFields.value.push(...newField)
+  } else {
     formFields.value.push(newField)
   }
 }
 
 const emit = defineEmits<{
   (e: 'new-customer-added'): void
+  (e: 'customer-updated'): void
 }>()
 
 onMounted(async () => {
-  await createCustomer()
+  await initForm()
 })
 
 </script>
@@ -143,7 +190,7 @@ onMounted(async () => {
       size="xl"
     >
       <template #title>
-        {{ formVersion.title }}
+        {{ isEditMode ? 'Edit Customer' : formVersion.title }}
       </template>
       <template #default>
         <DynamicForm
@@ -154,12 +201,16 @@ onMounted(async () => {
           :is-loading="isLoading"
           layout="horizontal"
           :errors="validationErrors"
+          @update:fields="formFields = $event"
         />
       </template>
       <template #footer>
         <div class="flex">
           <div class="flex w-full h-full">
-            <div class="relative">
+            <div
+              v-if="!isEditMode"
+              class="relative"
+            >
               <GroBasicDropUp>
                 <template #button>
                   <div class="flex cursor-pointer my-1">
@@ -221,7 +272,7 @@ onMounted(async () => {
                       class="text-slate-800 hover:bg-slate-50 flex items-center p-2 cursor-pointer"
                       @click.prevent="handleAddField('birthdate')"
                     >
-                      <span class="whitespace-nowrap">Birthdate</span>
+                      <span class="whitespace-nowrap">Date</span>
                     </a>
                   </li>
                   <li>
@@ -245,7 +296,10 @@ onMounted(async () => {
             </div>
           </div>
           <div class="ml-auto gap-x-4 flex">
-            <div class="hidden md:block">
+            <div
+              v-if="!isEditMode"
+              class="hidden md:block"
+            >
               <GroBasicButton
                 color="secondary"
                 size="sm"
@@ -263,7 +317,7 @@ onMounted(async () => {
               class="w-max h-max"
               @click="saveCustomer"
             >
-              Save
+              {{ isEditMode ? 'Update' : 'Save' }}
             </GroBasicButton>
           </div>
         </div>

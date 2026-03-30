@@ -19,6 +19,42 @@ func NewFormSubmissionController(service services.FormSubmissionService) *FormSu
 	}
 }
 
+// UpdateSubmission godoc
+// @Summary      Update submission answers
+// @Description  Updates the answers of an existing submission.
+// @Tags         Forms
+// @Accept       json
+// @Produce      json
+// @Param        Authorization  header  string                            true  "Bearer access token"
+// @Param        formId         path    string                            true  "Form ID"
+// @Param        submissionId   path    string                            true  "Submission ID"
+// @Param        request        body    dtos.UpdateSubmissionAnswersInput  true  "Updated answers"
+// @Success      200  {object}  response.CommonResponse
+// @Failure      400  {object}  response.CommonResponse
+// @Failure      401  {object}  response.CommonResponse
+// @Router       /api/v1/forms/{formId}/submission/{submissionId} [patch]
+func (ctl *FormSubmissionController) UpdateSubmission(c *fiber.Ctx) error {
+	formID := c.Params("formId")
+	submissionID := c.Params("submissionId")
+
+	var req dtos.UpdateSubmissionAnswersInput
+	if err := c.BodyParser(&req); err != nil {
+		return exception.InvalidRequestBodyError
+	}
+
+	if err := ctl.service.UpdateSubmission(c.Context(), formID, submissionID, req.Answers); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(response.CommonResponse{
+			ResponseCode:    response.RESOURCE_NOT_FOUND,
+			ResponseMessage: err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.CommonResponse{
+		ResponseCode:    response.RESOURCE_UPDATED,
+		ResponseMessage: "Submission updated successfully",
+	})
+}
+
 // CreateSubmission godoc
 // @Summary      Submit form answers
 // @Description  Creates a submission for a published form version. CRM ID is supplied via the X-CRM-ID header.
@@ -41,7 +77,7 @@ func (ctl *FormSubmissionController) CreateSubmission(c *fiber.Ctx) error {
 
 	var userID string
 	if claims, err := auth.AuthUser(c); err == nil {
-		userID = claims.User.ID.String()
+		userID = claims.UserID
 	}
 
 	var req dtos.CreateSubmissionInput

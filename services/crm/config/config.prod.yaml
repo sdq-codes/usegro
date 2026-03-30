@@ -30,11 +30,9 @@ postgres:
   maxConnections: 10
   maxConnIdleTime: 5
 
-dynamodbForms:
-  awsRegion: "${AWS_REGION}"
-  dynamoEndpoint: "" # empty = use AWS managed DynamoDB
-  dynamoTable: "crm_forms"
-  dynamoFormTableName: "forms"
+mongodb:
+  uri: "${MONGODB_URI}"
+  database: "${MONGODB_DATABASE}"
 
 redis:
   - host: "${REDIS_HOST}"

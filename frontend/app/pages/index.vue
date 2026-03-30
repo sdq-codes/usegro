@@ -33,7 +33,7 @@ import { navigateTo } from 'nuxt/app'
     middleware: ['demo'],
   });
 
-  if (process.client && localStorage.getItem('refresh_token')) {
+  if (process.client && localStorage.getItem('session')) {
     await navigateTo('/dashboard')
   }
 </script>

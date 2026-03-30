@@ -43,7 +43,7 @@ const submitLoginForm = async () => {
   } else {
     notify(loginApi.data?.response_message, 'success');
     setAccessToken(loginApi.data?.data?.access_token)
-    localStorage.setItem("refresh_token", loginApi.data?.data?.refresh_token)
+    localStorage.setItem("session", "1")
     router.push("/verification/email")
   }
 }
@@ -64,8 +64,12 @@ const loginWithGoogle = () => {
   const left = window.screenX + (window.outerWidth - width) / 2
   const top = window.screenY + (window.outerHeight - height) / 2
 
+  const base = (import.meta.env.NUXT_PUBLIC_API_BASE as string | undefined) || 'http://localhost/api/v1'
+  const googleLoginUrl = `${base.replace(/\/$/, '')}/base/authentication/google/login`
+
+
   popupRef = window.open(
-    'http://localhost:8090/api/v1/authentication/google/login',
+    googleLoginUrl,
     'Google Login',
     `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
   )
@@ -77,7 +81,7 @@ if (process.client) {
 
     if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
       setAccessToken(event.data.accessToken)
-      localStorage.setItem('refresh_token', event.data.refreshToken)
+      localStorage.setItem('session', '1')
       popupRef = null
       router.push('/dashboard')
     }

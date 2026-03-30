@@ -5,9 +5,7 @@ import GroBasicButton from "@/components/buttons/GroBasicButton.vue";
 import {PlusSignIcon} from "@hugeicons/core-free-icons";
 import {HugeiconsIcon} from "@hugeicons/vue";
 import {useCrmTagsAPI} from "@/composables/api/tag/tag.js";
-import type {FetchCrmTagResponse} from "@/composables/dto/tag/tag";
-
-const model = defineModel<FetchCrmTagResponse[]>({ default: () => [] })
+const model = defineModel<string[]>({ default: () => [] })
 
 
 const crmId = ref(null);
@@ -30,6 +28,7 @@ const createTag = async () => {
   const createTagApiResponse = await useCrmTagsAPI().CreateTag({tag: newTagName.value})
   if (createTagApiResponse.success) {
     tags.value = createTagApiResponse.data?.data;
+    newTagName.value = "";
     showAddTag.value = false;
   } else {
     addTagInputHint.value = "Error fetching tag";
@@ -43,33 +42,31 @@ const selectTag = (tagId) => {
   if (model.value.includes(tagId)) {
     model.value = model.value.filter(item => item !== tagId);
   } else {
-    model.value.push(tagId);
+    model.value = [...model.value, tagId];
   }
 };
 
 onMounted(() => {
   crmId.value = localStorage.getItem("crmId");
-  model.value = [];
   fetchTags();
 });
 </script>
 
 <template>
-  <div class="rounded-lg">
+  <div class="rounded-2xl border border-[#E8EAED] px-4 py-3">
     <div
       v-if="!showAddTag"
       class="flex flex-wrap gap-4 mb-3"
     >
       <button
         v-for="tag in tags"
-
-        :key="tag.SK"
-        class="px-3 py-1 rounded-lg cursor-pointer text-xs capitalize font-semibold"
+        :key="tag.id"
+        class="px-4 py-1.5 rounded-full cursor-pointer text-xs capitalize font-semibold"
         :class="{
-          'bg-[#1E212B] text-white': model?.includes(tag.SK),
-          'bg-gray-100': !model?.includes(tag.SK),
+          'bg-[#1E3A5F] text-white': model?.includes(tag.id),
+          'bg-[#DBEAFE] text-[#1E3A5F]': !model?.includes(tag.id),
         }"
-        @click.prevent="selectTag(tag.SK)"
+        @click.prevent="selectTag(tag.id)"
       >
         {{ tag.tag }}
       </button>
@@ -83,11 +80,11 @@ onMounted(() => {
       <HugeiconsIcon
         :icon="PlusSignIcon"
         :size="12"
-        color="#070707"
+        color="#2176AE"
         :stroke-width="3"
         class="my-auto"
       />
-      <h6 class="text-xs border-b text-blue-500">
+      <h6 class="text-xs text-[#2176AE] ml-1">
         Add labels
       </h6>
     </div>

@@ -2,17 +2,13 @@ package cmd
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/spf13/cobra"
 	internalConfig "github.com/usegro/services/crm/config"
 	"github.com/usegro/services/crm/internal/logger"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -22,103 +18,56 @@ func init() {
 
 var createTablesCommand = &cobra.Command{
 	Use:     "create-tables",
-	Short:   "Create all required DynamoDB tables",
+	Short:   "Create all required MongoDB indexes",
 	GroupID: "make",
 	Run: func(cmd *cobra.Command, _ []string) {
 		setUpConfig()
 		setUpLogger()
 
-		dynamoCfg := internalConfig.GetConfig().DynamodbForms
-
+		mongoCfg := internalConfig.GetConfig().MongoDB
 		ctx := context.Background()
 
-		var cfgOpts []func(*config.LoadOptions) error
-		cfgOpts = append(cfgOpts, config.WithRegion(dynamoCfg.AwsRegion))
-
-		if dynamoCfg.DynamoEndpoint != "" {
-			// Local DynamoDB
-			cfgOpts = append(cfgOpts,
-				config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
-					func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-						return aws.Endpoint{URL: dynamoCfg.DynamoEndpoint}, nil
-					})),
-				config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
-					Value: aws.Credentials{
-						AccessKeyID: "dummy", SecretAccessKey: "dummy",
-					},
-				}),
-			)
-		}
-
-		cfg, err := config.LoadDefaultConfig(context.TODO(), cfgOpts...)
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoCfg.URI))
 		if err != nil {
-			logger.Log.Fatal("Unable to load AWS SDK config", zap.Error(err))
+			logger.Log.Fatal("Unable to connect to MongoDB", zap.Error(err))
 		}
+		defer client.Disconnect(ctx)
+		db := client.Database(mongoCfg.Database)
 
-		client := dynamodb.NewFromConfig(cfg)
-
-		tables := []dynamodb.CreateTableInput{
-			{
-				TableName: aws.String("forms"),
-				AttributeDefinitions: []types.AttributeDefinition{
-					{AttributeName: aws.String("PK"), AttributeType: types.ScalarAttributeTypeS},
-					{AttributeName: aws.String("SK"), AttributeType: types.ScalarAttributeTypeS},
-				},
-				KeySchema: []types.KeySchemaElement{
-					{AttributeName: aws.String("PK"), KeyType: types.KeyTypeHash},
-					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
-				},
-				ProvisionedThroughput: &types.ProvisionedThroughput{
-					ReadCapacityUnits:  aws.Int64(5),
-					WriteCapacityUnits: aws.Int64(5),
-				},
+		indexDefs := map[string][]mongo.IndexModel{
+			"forms": {
+				{Keys: bson.D{{Key: "crmID", Value: 1}, {Key: "type", Value: 1}}},
 			},
-			{
-				TableName: aws.String("form_submissions"),
-				AttributeDefinitions: []types.AttributeDefinition{
-					{AttributeName: aws.String("PK"), AttributeType: types.ScalarAttributeTypeS},
-					{AttributeName: aws.String("SK"), AttributeType: types.ScalarAttributeTypeS},
-				},
-				KeySchema: []types.KeySchemaElement{
-					{AttributeName: aws.String("PK"), KeyType: types.KeyTypeHash},
-					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
-				},
-				ProvisionedThroughput: &types.ProvisionedThroughput{
-					ReadCapacityUnits:  aws.Int64(5),
-					WriteCapacityUnits: aws.Int64(5),
-				},
+			"form_versions": {
+				{Keys: bson.D{{Key: "formID", Value: 1}}},
+				{Keys: bson.D{{Key: "formID", Value: 1}, {Key: "formVersionStatus", Value: 1}}},
 			},
-			{
-				TableName: aws.String("tags"),
-				AttributeDefinitions: []types.AttributeDefinition{
-					{AttributeName: aws.String("PK"), AttributeType: types.ScalarAttributeTypeS},
-					{AttributeName: aws.String("SK"), AttributeType: types.ScalarAttributeTypeS},
-				},
-				KeySchema: []types.KeySchemaElement{
-					{AttributeName: aws.String("PK"), KeyType: types.KeyTypeHash},
-					{AttributeName: aws.String("SK"), KeyType: types.KeyTypeRange},
-				},
-				ProvisionedThroughput: &types.ProvisionedThroughput{
-					ReadCapacityUnits:  aws.Int64(5),
-					WriteCapacityUnits: aws.Int64(5),
-				},
+			"form_fields": {
+				{Keys: bson.D{{Key: "formVersionID", Value: 1}, {Key: "order", Value: 1}}},
+			},
+			"form_submissions": {
+				{Keys: bson.D{{Key: "formID", Value: 1}}},
+				{Keys: bson.D{{Key: "crmID", Value: 1}, {Key: "type", Value: 1}}},
+				{Keys: bson.D{{Key: "formID", Value: 1}, {Key: "answers.email", Value: 1}}},
+				{Keys: bson.D{{Key: "formID", Value: 1}, {Key: "answers.phone_number", Value: 1}}},
+			},
+			"tags": {
+				{Keys: bson.D{{Key: "crmID", Value: 1}}},
+			},
+			"customer_activity": {
+				{Keys: bson.D{{Key: "customerID", Value: 1}, {Key: "createdAt", Value: -1}}},
 			},
 		}
 
-		for _, input := range tables {
-			tableName := aws.ToString(input.TableName)
-			_, err := client.CreateTable(ctx, &input)
+		for colName, indexes := range indexDefs {
+			_, err := db.Collection(colName).Indexes().CreateMany(ctx, indexes)
 			if err != nil {
-				var resourceInUse *types.ResourceInUseException
-				if errors.As(err, &resourceInUse) {
-					logger.Log.Info(fmt.Sprintf("Table already exists, skipping: %s", tableName))
-					continue
-				}
-				logger.Log.Fatal("Failed to create table", zap.String("table", tableName), zap.Error(err))
+				logger.Log.Error("Failed to create indexes", zap.String("collection", colName), zap.Error(err))
+				continue
 			}
-			logger.Log.Info("Created table", zap.String("table", tableName))
+			logger.Log.Info("Created indexes", zap.String("collection", colName))
 		}
 
-		logger.Log.Info("All tables created successfully")
+		logger.Log.Info("All indexes created successfully")
 	},
 }

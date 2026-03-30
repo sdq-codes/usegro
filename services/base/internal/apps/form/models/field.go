@@ -3,46 +3,44 @@ package models
 import "time"
 
 type Option struct {
-	Label string `dynamodbav:"label" json:"label"`
-	Value string `dynamodbav:"value" json:"value"`
+	Label string `bson:"label" json:"label"`
+	Value string `bson:"value" json:"value"`
 }
 
 type Alert struct {
-	Icon    string `dynamodbav:"icon" json:"icon"`
-	Type    string `dynamodbav:"type" json:"type"`
-	Message string `dynamodbav:"message" json:"message"`
+	Icon    string `bson:"icon" json:"icon"`
+	Type    string `bson:"type" json:"type"`
+	Message string `bson:"message" json:"message"`
 }
 
 type FormVersionField struct {
-	PK            string              `dynamodbav:"PK"`
-	SK            string              `dynamodbav:"SK"`
-	FormVersionID string              `dynamodbav:"formVersionID" json:"formVersionID"`
-	FieldTypeID   uint                `dynamodbav:"fieldTypeId" json:"fieldTypeID"`
-	FieldTypeName string              `dynamodbav:"fieldTypeName" json:"fieldTypeName"`
-	Label         string              `dynamodbav:"label" json:"label"`
-	Description   string              `dynamodbav:"description" json:"description"`
-	Hint          string              `dynamodbav:"hint" json:"hint"`
-	Section       string              `dynamodbav:"section" json:"section"`
-	Placeholder   string              `dynamodbav:"placeholder" json:"placeholder"`
-	Configs       []map[string]string `dynamodbav:"configs" json:"configs"`
-	Options       []Option            `dynamodbav:"options" json:"options"`
-	Alert         []Alert             `dynamodbav:"alert" json:"alert"`
-	Validations   []map[string]string `dynamodbav:"validations" json:"validations"`
-	Order         int                 `dynamodbav:"order" json:"order"`
-	Required      bool                `dynamodbav:"required" json:"required"`
-	Slug          string              `dynamodbav:"slug" json:"slug"`
-	Logic         []FieldLogic        `dynamodbav:"logic" json:"logic"`
-	CreatedAt     time.Time           `dynamodbav:"createdAt" json:"createdAt"`
-	UpdatedAt     time.Time           `dynamodbav:"updatedAt" json:"updatedAt"`
+	ID            string              `bson:"_id" json:"id"`
+	FormVersionID string              `bson:"formVersionID" json:"formVersionID"`
+	FieldTypeID   uint                `bson:"fieldTypeId" json:"fieldTypeID"`
+	FieldTypeName string              `bson:"fieldTypeName" json:"fieldTypeName"`
+	Label         string              `bson:"label" json:"label"`
+	Description   string              `bson:"description" json:"description"`
+	Hint          string              `bson:"hint" json:"hint"`
+	Section       string              `bson:"section" json:"section"`
+	Placeholder   string              `bson:"placeholder" json:"placeholder"`
+	Configs       []map[string]string `bson:"configs" json:"configs"`
+	Options       []Option            `bson:"options" json:"options"`
+	Alert         []Alert             `bson:"alert" json:"alert"`
+	Validations   []map[string]string `bson:"validations" json:"validations"`
+	Order         int                 `bson:"order" json:"order"`
+	Required      bool                `bson:"required" json:"required"`
+	Slug          string              `bson:"slug" json:"slug"`
+	Logic         []FieldLogic        `bson:"logic" json:"logic"`
+	CreatedAt     time.Time           `bson:"createdAt" json:"createdAt"`
+	UpdatedAt     time.Time           `bson:"updatedAt" json:"updatedAt"`
 }
 
 type FieldLogic struct {
-	PK                 string      `dynamodbav:"PK"`
-	SK                 string      `dynamodbav:"SK"`
-	FormVersionFieldID string      `dynamodbav:"formVersionFieldID" json:"formVersionFieldID"` // the field it depends on
-	Operator           string      `dynamodbav:"operator" json:"operator"`                     // e.g. equals, not_equals, greater_than
-	Value              interface{} `dynamodbav:"value" json:"value"`                           // the value to compare
-	Action             string      `dynamodbav:"action" json:"action"`                         // e.g. show, hide, enable, disable
-	CreatedAt          time.Time   `dynamodbav:"createdAt" json:"createdAt"`
-	UpdatedAt          time.Time   `dynamodbav:"updatedAt" json:"updatedAt"`
+	ID                 string      `bson:"_id,omitempty" json:"id,omitempty"`
+	FormVersionFieldID string      `bson:"formVersionFieldID" json:"formVersionFieldID"`
+	Operator           string      `bson:"operator" json:"operator"`
+	Value              interface{} `bson:"value" json:"value"`
+	Action             string      `bson:"action" json:"action"`
+	CreatedAt          time.Time   `bson:"createdAt" json:"createdAt"`
+	UpdatedAt          time.Time   `bson:"updatedAt" json:"updatedAt"`
 }

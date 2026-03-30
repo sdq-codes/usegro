@@ -20,6 +20,8 @@ http:
           - "X-Request-Id"
           - "X-CRM-ID"
         accessControlAllowOriginList:
-          - "*"  # tighten to your frontend domain in production
+          - "http://localhost"
+          - "http://localhost:3000"
+        accessControlAllowCredentials: true
         accessControlMaxAge: 100
         addVaryHeader: true

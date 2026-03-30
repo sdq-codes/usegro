@@ -1,23 +1,23 @@
 package routes
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 	crm "github.com/usegro/services/crm/internal/apps/crm/controllers"
 	crmsocials "github.com/usegro/services/crm/internal/apps/crm/controllers/socials"
 	crmService "github.com/usegro/services/crm/internal/apps/crm/services"
 	"github.com/usegro/services/crm/internal/router/middleware"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
-func CrmRouter(v1 fiber.Router, db *gorm.DB, rdb *redis.Client, dynamodbForms *dynamodb.Client) {
+func CrmRouter(v1 fiber.Router, db *gorm.DB, rdb *redis.Client, mongoDB *mongo.Database) {
 	crmUserOrganizationAPIGroup := v1.Group("/crm")
 
 	// Tags — nested under /crm/tags; CRM ID supplied via X-CRM-ID header
 	crmTagsAPIGroup := crmUserOrganizationAPIGroup.Group("/tags")
 
-	crmTagController := crm.NewTagController(crmService.NewTagService(dynamodbForms))
+	crmTagController := crm.NewTagController(crmService.NewTagService(mongoDB))
 
 	crmTagsAPIGroup.Post("", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmTagController.CreateTag)
 	crmTagsAPIGroup.Get("", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmTagController.ListTags)
@@ -25,9 +25,12 @@ func CrmRouter(v1 fiber.Router, db *gorm.DB, rdb *redis.Client, dynamodbForms *d
 	crmTagsAPIGroup.Patch("/:tagId/name", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmTagController.UpdateTagName)
 	crmTagsAPIGroup.Patch("/:tagId/status", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmTagController.UpdateTagStatus)
 
-	crmCustomerController := crm.NewCRMCustomerController(crmService.NewCrmCustomerService(db, rdb, dynamodbForms))
+	crmCustomerController := crm.NewCRMCustomerController(crmService.NewCrmCustomerService(db, rdb, mongoDB))
+	crmActivityController := crm.NewCustomerActivityController(crmService.NewCustomerActivityService(mongoDB))
 	crmUserOrganizationCustomerAPIGroup := crmUserOrganizationAPIGroup.Group("/customers")
 	crmUserOrganizationCustomerAPIGroup.Get("", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmCustomerController.FetchCrmCustomers)
+	crmUserOrganizationCustomerAPIGroup.Get("/:submissionId/activity", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmActivityController.FetchCustomerActivity)
+	crmUserOrganizationCustomerAPIGroup.Post("/:submissionId/activity", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmActivityController.LogComment)
 	crmUserOrganizationCustomerAPIGroup.Delete("/:formId/:submissionId", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmCustomerController.ArchiveCrmCustomer)
 	crmUserOrganizationCustomerAPIGroup.Get("/:formId/:submissionId", middleware.JwtVerify(), middleware.CRMContextMiddleware(), crmCustomerController.GetCrmCustomer)
 

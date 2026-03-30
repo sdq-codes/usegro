@@ -70,8 +70,8 @@ async function logout() {
       </div>
 
       <!-- Connect Socials card -->
-      <div class="bg-white border border-[#EDEDEE] rounded-2xl py-10 px-8 w-full max-w-lg">
-        <h2 class="text-2xl font-bold text-[#1E212B] mb-1">
+      <div class="bg-white border border-[#EDEDEE] rounded-2xl py-4 px-4 md:py-10 md:px-8 w-full max-w-lg">
+        <h2 class="text-xl md:text-2xl font-bold text-[#1E212B] mb-1">
           Connect your social networks
         </h2>
         <p class="text-sm text-[#6F7177] mb-7">

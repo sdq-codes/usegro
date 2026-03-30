@@ -30,8 +30,22 @@ export const useFormAPI = () => {
     }
   }
 
+  const UpdateSubmission = async (formId: string, submissionId: string, answers: Record<string, unknown>): Promise<ApiResult<null, RawAxiosResponseHeaders>> => {
+    try {
+      const response = await api.patch(
+        `/base/forms/${formId}/submission/${submissionId}`,
+        { answers }
+      )
+
+      return { success: true, data: response.data, headers: response.headers }
+    } catch (error: unknown) {
+      return { success: false, error: error.response?.data?.response_message || "Customer update failed" }
+    }
+  }
+
   return {
     FetchForm,
-    CreateCustomer
+    CreateCustomer,
+    UpdateSubmission,
   }
 }

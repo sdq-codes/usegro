@@ -8,12 +8,6 @@ export const LIST_CUSTOMER_COLUMNS: ColsDefinition[] = [
     type: 'string'
   },
   {
-    field: 'customer_type',
-    title: 'Customer Type',
-    type: 'string',
-    isUnique: false
-  },
-  {
     field: 'email',
     title: 'Email',
     type: 'string'
@@ -23,5 +17,15 @@ export const LIST_CUSTOMER_COLUMNS: ColsDefinition[] = [
     title: 'Phone Number',
     type: 'string'
   },
-  { field: 'actions', title: 'Actions' },
+  {
+    field: 'address',
+    title: 'Address',
+    type: 'string'
+  },
+  {
+    field: 'customer_type',
+    title: 'Customer Type',
+    type: 'string',
+    isUnique: false
+  },
 ];

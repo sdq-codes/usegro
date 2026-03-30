@@ -3,61 +3,52 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/usegro/services/crm/internal/apps/crm/repositories"
 	formModels "github.com/usegro/services/crm/internal/apps/form/models"
 	"github.com/usegro/services/crm/internal/logger"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type CrmCustomerService struct {
-	crmCustomerRepo *repositories.CRMCustomerRepository
-	dynamo          *dynamodb.Client
+	crmCustomerRepo repositories.CRMCustomerRepositoryInterface
 }
 
-func NewCrmCustomerService(db *gorm.DB, rdb *redis.Client, dynamo *dynamodb.Client) *CrmCustomerService {
+func NewCrmCustomerService(db *gorm.DB, rdb *redis.Client, mongoDB *mongo.Database) *CrmCustomerService {
 	return &CrmCustomerService{
-		crmCustomerRepo: repositories.NewCRMCustomerRepository(db, rdb),
-		dynamo:          dynamo,
+		crmCustomerRepo: repositories.NewCRMCustomerRepository(db, rdb, mongoDB),
 	}
 }
 
-// FetchPublishedCreateCustomerForm fetches the published "create_customer" form for the given crmId.
-// If none is found for that crmId, it falls back to the "global" form.
 func (c *CrmCustomerService) FetchPublishedCreateCustomerForm(ctx context.Context, crmId string) (*formModels.CompleteForm, error) {
-	// Try crmId first
-	form, err := c.crmCustomerRepo.FetchPublishedCreateCustomerForm(ctx, c.dynamo, crmId)
-	if err == nil && form != nil {
-		return form, nil
-	}
-	return form, nil
+	return c.crmCustomerRepo.FetchPublishedCreateCustomerForm(ctx, crmId)
 }
 
-// FetchCrmCustomers fetches the crm "customers" for the given crmId.
-func (c *CrmCustomerService) FetchCrmCustomers(ctx context.Context, crmId string) (*[]formModels.FormSubmission, error) {
-	customers, err := c.crmCustomerRepo.FetchCrmCustomers(ctx, c.dynamo, crmId)
+func (c *CrmCustomerService) FetchCrmCustomers(ctx context.Context, crmId string, page, limit int) (*repositories.PaginatedCustomers, error) {
+	result, err := c.crmCustomerRepo.FetchCrmCustomers(ctx, crmId, page, limit)
 	if err != nil {
 		logger.Log.Error("CRM customers could not be fetched", zap.Error(err))
 		return nil, fmt.Errorf("CRM customers could not be fetched")
 	}
-	return &customers, nil
+	return result, nil
 }
 
 func (c *CrmCustomerService) ArchiveCrmCustomer(ctx context.Context, submissionID, formId, crmId string) error {
-	err := c.crmCustomerRepo.ArchiveCrmCustomer(ctx, c.dynamo, submissionID, formId, crmId)
+	err := c.crmCustomerRepo.ArchiveCrmCustomer(ctx, submissionID, formId, crmId)
 	if err != nil {
-		logger.Log.Error("CRM customers could not be fetched", zap.Error(err))
+		logger.Log.Error("CRM customer could not be archived", zap.Error(err))
 		return fmt.Errorf("CRM customers could not be deleted")
 	}
 	return nil
 }
 
 func (c *CrmCustomerService) GetCrmCustomer(ctx context.Context, submissionID, formId, crmId string) (*formModels.FormSubmission, error) {
-	customer, err := c.crmCustomerRepo.GetCrmCustomer(ctx, c.dynamo, submissionID, formId, crmId)
+	customer, err := c.crmCustomerRepo.GetCrmCustomer(ctx, submissionID, formId, crmId)
 	if err != nil {
-		logger.Log.Error("CRM customers could not be fetched", zap.Error(err))
+		logger.Log.Error("CRM customer could not be fetched", zap.Error(err))
 		return nil, fmt.Errorf("CRM customers could not be deleted")
 	}
 	return customer, nil

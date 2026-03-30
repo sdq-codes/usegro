@@ -10,6 +10,7 @@ import (
 	"github.com/sdq-codes/usegro-api/internal/apps/base/models"
 	"github.com/sdq-codes/usegro-api/internal/apps/base/repositories"
 	"github.com/sdq-codes/usegro-api/internal/logger"
+	"github.com/sdq-codes/usegro-api/pkg/amplitude"
 	"github.com/sdq-codes/usegro-api/pkg/exception"
 	"gorm.io/gorm"
 )
@@ -52,8 +53,9 @@ func (s *EmailService) EmailVerification(ctx context.Context, code string, user 
 		return exception.EmailVerificationError
 	}
 
-	// Validate and consume the code atomically from Redis.
-	stored, err := s.rdb.GetDel(ctx, emailVerifyKey(user.ID.String())).Result()
+	// Validate the code — only delete it on success so wrong guesses don't consume it.
+	key := emailVerifyKey(user.ID.String())
+	stored, err := s.rdb.Get(ctx, key).Result()
 	if err != nil || stored == "" {
 		logger.Log.Info(fmt.Sprintf("EmailVerification: code expired or missing for %s", user.Email))
 		return exception.IncorrectEmailVerificationError
@@ -62,6 +64,7 @@ func (s *EmailService) EmailVerification(ctx context.Context, code string, user 
 		logger.Log.Info(fmt.Sprintf("EmailVerification: wrong code for %s", user.Email))
 		return exception.IncorrectEmailVerificationError
 	}
+	s.rdb.Del(ctx, key)
 
 	// Mark as verified inside a transaction.
 	tx := s.db.Begin()
@@ -71,5 +74,8 @@ func (s *EmailService) EmailVerification(ctx context.Context, code string, user 
 		return exception.EmailVerificationError
 	}
 	tx.Commit()
+	amplitude.Track(user.ID.String(), amplitude.EventEmailVerified, map[string]interface{}{
+		amplitude.PropEmail: user.Email,
+	})
 	return nil
 }

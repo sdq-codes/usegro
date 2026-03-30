@@ -109,7 +109,7 @@ const removeFile = () => {
         </div>
       </template>
       <template #body>
-        <div class="p-4 md:p-8">
+        <div class="p-4 md:p-6">
           <h4 class="font-semibold text-[#1E212B] text-lg mt-2">
             Upload your file
           </h4>

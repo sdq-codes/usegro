@@ -56,35 +56,41 @@ export function useFormFieldManager() {
     return creator(fieldCount.value[type as keyof typeof fieldCount.value])
   }
 
+  const buildCompleteField = (raw: Record<string, unknown>, type: string, index?: number): FormField => {
+    const section = (raw.section as string) || "Extra fields"
+    const suffix = index !== undefined ? `${fieldCount.value[type as keyof typeof fieldCount.value]}-${index}` : fieldCount.value[type as keyof typeof fieldCount.value]
+    return {
+      ...raw,
+      SK: raw.SK || `FIELD#${type}-${suffix}`,
+      slug: raw.slug || `${type}_${suffix}`,
+      section,
+      order: raw.order || 1,
+      fieldTypeName: (raw.fieldTypeName as string) || 'Short Text',
+      label: (raw.label as string) || `${type.charAt(0).toUpperCase() + type.slice(1)} ${fieldCount.value[type as keyof typeof fieldCount.value]}`,
+      description: (raw.description as string) || '',
+      required: (raw.required as boolean) ?? false,
+      options: (raw.options as FormField['options']) || [],
+      configs: (raw.configs as FormField['configs']) || [],
+      validations: (raw.validations as FormField['validations']) || [],
+    } as FormField
+  }
+
   const addField = (
     type: string,
     formFields: FormField[],
     answerMap: Record<string, string | string[]>
-  ): FormField | null => {
-    const newField = createFieldFromType(type)
-    if (!newField) return null
+  ): FormField | FormField[] | null => {
+    const result = createFieldFromType(type)
+    if (!result) return null
 
-    const section = newField.section || "Extra fields"
-    const extraFields = formFields.filter(f => f.section === section)
-
-    const completeField: FormField = {
-      ...newField,
-      SK: newField.SK || `FIELD#${type}-${fieldCount.value[type as keyof typeof fieldCount.value]}`,
-      slug: newField.slug || `${type}_${fieldCount.value[type as keyof typeof fieldCount.value]}`,
-      section: section,
-      order: newField.order || extraFields.length + 1,
-      fieldTypeName: newField.fieldTypeName || 'Short Text',
-      label: newField.label || `${type.charAt(0).toUpperCase() + type.slice(1)} ${fieldCount.value[type as keyof typeof fieldCount.value]}`,
-      description: newField.description || '',
-      required: newField.required ?? false,
-      options: newField.options || [],
-      configs: newField.configs || [],
-      validations: newField.validations || []
+    if (Array.isArray(result)) {
+      const fields = result.map((raw, i) => buildCompleteField(raw as Record<string, unknown>, type, i))
+      fields.forEach(f => { answerMap[f.slug] = getDefaultValue(f) })
+      return fields
     }
 
-    // Update answerMap with default value
+    const completeField = buildCompleteField(result as Record<string, unknown>, type)
     answerMap[completeField.slug] = getDefaultValue(completeField)
-
     return completeField
   }
 

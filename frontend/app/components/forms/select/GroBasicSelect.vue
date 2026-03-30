@@ -19,7 +19,7 @@ interface Props {
   loading?: boolean
   color?: 'primary' | 'success' | 'error'
   readonly?: boolean
-  options: { value: string | number; label: string }[]
+  options: { value: string | number; label: string; description?: string }[]
   modelValue?: string | number | null,
   multipleSelect?: boolean,
   showInitials?: boolean
@@ -54,7 +54,25 @@ function onAddNew() {
   emit('add-new')
 }
 
-const model = defineModel<string | Array<any>>();
+const model = defineModel<string | number | Array<any> | null>();
+
+// Normalize between plain value ↔ full option object for vue-multiselect
+const internalModel = computed({
+  get() {
+    if (props.multipleSelect) {
+      const vals = model.value as (string | number)[] | undefined
+      return vals?.map(v => props.options.find(o => o.value === v)).filter(Boolean) ?? []
+    }
+    return props.options.find(o => o.value === model.value) ?? null
+  },
+  set(val: any) {
+    if (props.multipleSelect) {
+      model.value = val?.map((o: any) => o.value) ?? []
+    } else {
+      model.value = val?.value ?? null
+    }
+  }
+})
 
 // Base classes for select
 const selectClass = computed(() => {
@@ -86,7 +104,7 @@ const hintClasses: Record<string, string> = {
 
 const labelClass = computed(() => {
   return [
-    'text-xs font-medium mb-2',
+    'text-xs font-medium mb-1',
     labelClasses[props.color || 'primary'],
   ].join(' ')
 })
@@ -110,13 +128,16 @@ const wrapperClass = 'relative flex flex-col gap-1'
     <!-- Select wrapper with trailing icon -->
     <div :class="wrapperClass">
       <Multiselect
-        v-model="model"
+        v-model="internalModel"
         :options="props.options"
         :placeholder="placeholder"
         :searchable="true"
         :multiple="multipleSelect"
         track-by="value"
         label="label"
+        select-label=""
+        selected-label=""
+        deselect-label=""
         :class="selectClass"
         class="rounded-lg hover:border-[#94BDD8]"
       >
@@ -128,7 +149,10 @@ const wrapperClass = 'relative flex flex-col gap-1'
             >
               {{ getInitials(option.label) }}
             </div>
-            <span>{{ option.label }}</span>
+            <div class="flex flex-col min-w-0">
+              <span class="font-semibold text-sm whitespace-normal break-words">{{ option.label }}</span>
+              <span v-if="option.description" class="text-xs text-[#939499] font-normal mt-0.5 whitespace-normal break-words">{{ option.description }}</span>
+            </div>
           </div>
         </template>
 

@@ -10,6 +10,9 @@ const (
 	// Password management
 	EventPasswordResetCompleted = "password_reset_completed"
 
+	// Email verification
+	EventEmailVerified = "email_verified"
+
 	// Contacts / Customers (form submissions)
 	EventContactCreated = "contact_created"
 )

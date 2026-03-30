@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-import { defineProps, computed } from 'vue'
+import { defineProps, defineModel, computed } from 'vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import {CheckmarkSquare01Icon, AlertSquareIcon, CancelSquareIcon} from '@hugeicons/core-free-icons'
+
+const model = defineModel<string>()
 
 const props = defineProps<{
   placeholder?: string,
@@ -68,6 +70,7 @@ const wrapperClass = 'relative flex flex-col gap-1 mt-3'
     <!-- Input wrapper with trailing icon -->
     <div :class="wrapperClass">
       <textarea
+        v-model="model"
         type="text"
         rows="5"
         :placeholder="placeholder"

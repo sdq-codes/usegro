@@ -13,10 +13,41 @@
         :field="field"
         :required="field.required"
         :type="field.fieldTypeName === 'Date' ? 'date' : field.fieldTypeName === 'Email' ? 'email' : 'text'"
+        v-bind="{
+          ...(field.fieldTypeName === 'State' ? { countryValue: model[field.configs?.find(c => c.key === 'countrySlug')?.fieldSlug ?? 'country'] } : {}),
+          ...(field.fieldTypeName === 'Radio Button' ? { layout: 'horizontal' } : {}),
+        }"
         class="mb-1"
       >
         <template #default>
-          <span>{{ field.label }}</span>
+          <template v-if="editableLabels">
+            <div class="flex items-center gap-1 group">
+              <input
+                v-if="editingSlug === field.slug"
+                :ref="(el) => { if (el) focusInput(el as HTMLInputElement) }"
+                :value="field.label"
+                class="border-b border-blue-500 focus:outline-none bg-transparent text-sm"
+                @change="emit('label-changed', { slug: field.slug, label: ($event.target as HTMLInputElement).value })"
+                @blur="editingSlug = null"
+                @keydown.enter="editingSlug = null"
+                @keydown.escape="editingSlug = null"
+              />
+              <span v-else class="text-sm">{{ field.label }}</span>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center w-6 h-6 rounded transition-all cursor-pointer"
+                :class="editingSlug === field.slug
+                  ? 'bg-blue-500 text-white shadow'
+                  : 'bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600'"
+                @click.prevent="editingSlug = editingSlug === field.slug ? null : field.slug"
+              >
+                <HugeiconsIcon :icon="PencilEditIcon" :size="13" :stroke-width="2" />
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <span>{{ field.label }}</span>
+          </template>
           <span
             v-if="field.required"
             class="text-red-500 ml-1"
@@ -35,6 +66,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { HugeiconsIcon } from '@hugeicons/vue'
+import { PencilEditIcon } from '@hugeicons/core-free-icons'
 import GroBasicInput from '../input/GroBasicInput.vue'
 import GroBasicTextArea from '../input/GroBasicTextArea.vue'
 import GroBasicRadio from '../select/GroBasicRadio.vue'
@@ -73,14 +106,26 @@ type FormField = {
 interface Props {
   fields: FormField[]
   errors?: Record<string, string>  // Accept errors from parent
+  editableLabels?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  errors: () => ({})
+  errors: () => ({}),
+  editableLabels: false
 })
+
+const emit = defineEmits<{
+  (e: 'label-changed', payload: { slug: string; label: string }): void
+}>()
 
 const model = defineModel<Record<string, string | string[]>>({ required: true })
 const internalErrors = ref<Record<string, string>>({})
+const editingSlug = ref<string | null>(null)
+
+const focusInput = (el: HTMLInputElement) => {
+  el.focus()
+  el.select()
+}
 
 // Use parent errors if provided, otherwise use internal errors
 const displayErrors = computed(() => {
@@ -110,6 +155,7 @@ const COMPONENT_MAP = {
 function getComponent(type: string) {
   return COMPONENT_MAP[type as keyof typeof COMPONENT_MAP] || 'div'
 }
+
 
 function extractShowIf(configs?: Config[]): Config | null {
   if (!configs?.length) return null

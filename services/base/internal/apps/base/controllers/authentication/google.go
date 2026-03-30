@@ -10,7 +10,9 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sdq-codes/usegro-api/config"
 	authenticationService "github.com/sdq-codes/usegro-api/internal/apps/base/services/authentication"
+	"github.com/sdq-codes/usegro-api/internal/helper/auth"
 	"github.com/sdq-codes/usegro-api/internal/interface/response"
+	"github.com/sdq-codes/usegro-api/pkg/exception"
 )
 
 const (
@@ -89,14 +91,20 @@ func (gc *GoogleController) HandleGoogleCallback(c *fiber.Ctx) error {
 
 	_, accessToken, refreshToken, err := gc.service.GoogleLogin(c.Context(), code)
 	if err != nil {
+		errCode := "auth_failed"
+		if err == exception.PasswordUserTriedGoogleLoginError {
+			errCode = "provider_mismatch_password"
+		}
 		return c.Redirect(
-			fmt.Sprintf("%s/oauth/callback?error=auth_failed", frontendURL),
+			fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, errCode),
 			fiber.StatusTemporaryRedirect,
 		)
 	}
 
+	auth.SetRefreshCookie(c, refreshToken)
+
 	return c.Redirect(
-		fmt.Sprintf("%s/oauth/callback?access_token=%s&refresh_token=%s", frontendURL, accessToken, refreshToken),
+		fmt.Sprintf("%s/oauth/callback?access_token=%s", frontendURL, accessToken),
 		fiber.StatusTemporaryRedirect,
 	)
 }
