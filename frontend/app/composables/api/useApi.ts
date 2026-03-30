@@ -24,10 +24,8 @@ let api: AxiosInstance
 
 export const useApi = () => {
   if (!api) {
-    const config = useRuntimeConfig()
-    const baseURL = (config.public.apiBase as string) || "http://localhost/api/v1"
     api = axios.create({
-      baseURL,
+      baseURL: process.env.NUXT_PUBLIC_API_BASE || "http://localhost/api/v1",
       timeout: 10000,
       headers: { "Content-Type": "application/json" },
       withCredentials: true, // send HttpOnly refresh_token cookie automatically

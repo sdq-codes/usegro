@@ -47,6 +47,9 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    define: {
+      'process.env.NUXT_PUBLIC_API_BASE': JSON.stringify(process.env.NUXT_PUBLIC_API_BASE || ''),
+    },
     server: {
       allowedHosts: ['nuxt'],
       host: '0.0.0.0',

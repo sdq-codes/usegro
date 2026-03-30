@@ -132,7 +132,7 @@ const loginWithGoogle = () => {
   const left = window.screenX + (window.outerWidth - width) / 2
   const top = window.screenY + (window.outerHeight - height) / 2
 
-  const base = (useRuntimeConfig().public.apiBase as string) || 'http://localhost/api/v1'
+  const base = process.env.NUXT_PUBLIC_API_BASE || 'http://localhost/api/v1'
   const googleLoginUrl = `${base.replace(/\/$/, '')}/base/authentication/google/login`
 
   popupRef = window.open(
