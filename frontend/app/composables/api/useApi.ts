@@ -50,8 +50,19 @@ export const useApi = () => {
         const original = error.config
 
         if (error.response?.status === 401 && !original._retry) {
+          // Never retry the refresh endpoint itself — just clear and bail
+          if (original.url?.includes('/base/authentication/refresh')) {
+            localStorage.removeItem('session')
+            return Promise.reject(error)
+          }
+
           // Only attempt refresh if we believe a session exists
-          if (!localStorage.getItem('session')) return Promise.reject(error)
+          if (!localStorage.getItem('session')) {
+            if (!window.location.pathname.startsWith('/authentication')) {
+              window.location.href = '/authentication/login'
+            }
+            return Promise.reject(error)
+          }
           original._retry = true
 
           if (isRefreshing) {

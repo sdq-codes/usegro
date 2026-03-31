@@ -19,7 +19,7 @@
           </NuxtLink>
         </div>
       </div>
-      <div class="px-20 absolute w-full top-12 right-0">
+      <div class="px-20 absolute w-full top-12 right-0 pointer-events-none">
         <img
           src="https://res.cloudinary.com/sdq121/image/upload/v1755376170/idi6ql03xtnkyisewfac.png"
           alt="Cloud Image"

@@ -96,9 +96,3 @@ const btnStyle = computed(() => {
 
 <style scoped>
 </style>
-
-
-aws s3api put-bucket-versioning \
---bucket usegro-staging-terraform-state \
---versioning-configuration Status=Enabled
-
