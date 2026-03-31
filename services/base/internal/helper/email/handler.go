@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -43,12 +42,6 @@ func (r *MailRequest) parseTemplate(fileName string, data interface{}) error {
 
 func (r *MailRequest) sendMail() (string, error) {
 	cfg := config.GetConfig()
-
-	// Skip sending when AWS credentials are not configured (e.g. local dev).
-	if os.Getenv("AWS_ACCESS_KEY_ID") == "" {
-		logger.Log.Info("AWS_ACCESS_KEY_ID not set — skipping email send")
-		return "", nil
-	}
 
 	recipients := r.To
 	if cfg.Env == "dev" || cfg.Env == "prod" || cfg.Env == "production" {
