@@ -13,6 +13,7 @@ RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/base-service .
 COPY --from=builder /app/config/ ./config/
+COPY --from=builder /app/internal/resources/email/html/ ./internal/resources/email/html/
 RUN chmod +x base-service
 EXPOSE 8090
 CMD ["/app/base-service", "serve-api"]
